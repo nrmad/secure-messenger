@@ -18,8 +18,8 @@ public String CONNECTION_STRING = "jdbc:sqlite:" + "resources" + File.separator 
 
 
 public static final String CREATE_CONTACTS_TABLE = "CREATE TABLE IF NOT EXISTS contacts(cid INTEGER PRIMARY KEY, username VARCHAR(255), ipv4 CHAR(15))";
-public static final String CREATE_ACCOUNTS_TABLE = "CREATE TABLE IF NOT EXISTS accounts(uid INTEGER PRIMARY KEY, cid INTEGER , username VARCHAR(255), pass varchar(255), FOREIGN KEY (cid) REFERENCES contacts(cid)";
-public static final String CREATE_MESSAGES_TABLE = "CREATE TABLE IF NOT EXISTS messages(mid INTEGER, cid INTEGER, uid, message-text TEXT, date-time TEXT), FOREIGN KEY (cid) REFERENCES contacts(cid)," +
+public static final String CREATE_ACCOUNTS_TABLE = "CREATE TABLE IF NOT EXISTS accounts(uid INTEGER PRIMARY KEY, cid INTEGER , username VARCHAR(255), pass varchar(255), FOREIGN KEY (cid) REFERENCES contacts(cid))";
+public static final String CREATE_MESSAGES_TABLE = "CREATE TABLE IF NOT EXISTS messages(mid INTEGER, cid INTEGER, uid INTEGER, messages TEXT, dt TEXT, FOREIGN KEY (cid) REFERENCES contacts(cid)," +
                                                     "FOREIGN KEY (uid) REFERENCES accounts(uid), PRIMARY KEY(mid, cid, uid))";
 
 private  DatabaseUtilites(){

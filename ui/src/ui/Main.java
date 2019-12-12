@@ -12,7 +12,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
 
-        DatabaseUtilites du = DatabaseUtilites.getInstance();
+        DatabaseUtilites databaseUtilites = DatabaseUtilites.getInstance();
         Parent root = FXMLLoader.load(getClass().getResource("sample.fxml"));
         primaryStage.setTitle("Secure Messenger");
         primaryStage.setScene(new Scene(root));

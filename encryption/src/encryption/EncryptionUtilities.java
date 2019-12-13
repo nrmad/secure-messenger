@@ -12,7 +12,7 @@ import java.util.Base64;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class Utilities {
+public class EncryptionUtilities {
 
     public static String encrypt(String plainText, PublicKey publicKey){
 
@@ -56,5 +56,7 @@ public class Utilities {
 
         return null;
     }
+
+
 
 }

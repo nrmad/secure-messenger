@@ -17,34 +17,37 @@ public String CONNECTION_STRING = "jdbc:sqlite:" + "resources" + File.separator 
 
 
 public static final String CREATE_CONTACTS_TABLE = "CREATE TABLE IF NOT EXISTS contacts(cid INTEGER PRIMARY KEY, username VARCHAR(255), ipv4 CHAR(15))";
-public static final String CREATE_ACCOUNTS_TABLE = "CREATE TABLE IF NOT EXISTS accounts(uid INTEGER PRIMARY KEY, cid INTEGER , username VARCHAR(255), pass varchar(255), salt char(64)," +
+public static final String CREATE_ACCOUNTS_TABLE = "CREATE TABLE IF NOT EXISTS accounts(uid INTEGER PRIMARY KEY, cid INTEGER NOT NULL , username VARCHAR(255), pass varchar(255), salt char(88)," +
                                                    "FOREIGN KEY (cid) REFERENCES contacts(cid))";
-public static final String CREATE_MESSAGES_TABLE = "CREATE TABLE IF NOT EXISTS messages(mid INTEGER, cid INTEGER, uid INTEGER, messages TEXT, dt TEXT, FOREIGN KEY (cid) REFERENCES contacts(cid)," +
+public static final String CREATE_MESSAGES_TABLE = "CREATE TABLE IF NOT EXISTS messages(mid INTEGER, cid INTEGER, uid INTEGER, message TEXT, dt TEXT, FOREIGN KEY (cid) REFERENCES contacts(cid)," +
                                                     "FOREIGN KEY (uid) REFERENCES accounts(uid), PRIMARY KEY(mid, cid, uid))";
 
 public static final String INSERT_CONTACT = "INSERT INTO contacts(username, ipv4) VALUES(?, ?)";
 public static final String INSERT_ACCOUNT = "INSERT INTO accounts(cid, username, pass, salt) VALUES (?,?,?,?)";
-public static final String INSERT_MESSAGE = "INSERT INTO messages(mid, cid, uid, messages, dt) VALUES(?,?,?,?,?) ";
+public static final String INSERT_MESSAGE = "INSERT INTO messages(cid, uid, message, dt) VALUES(?,?,?,?) ";
 
-//public static final String SELECT_MESSAGES = "SELECT * FROM MESSAGES WHERE "
+public static final String RETRIEVE_CID = "SELECT last_insert_rowid()";
+//public static final String SELECT_MESSAGES = "SELECT * FROM MESSAGES WHERE ";
 
 private PreparedStatement queryInsertContact;
 private PreparedStatement queryInsertAccount;
 private PreparedStatement queryInsertMessage;
+
+private PreparedStatement queryRetrieveCid;
 
 private  DatabaseUtilites(){
         openConnection();
         setupPreparedStatements();
 }
 
-/*
+/**
 Returns the singleton DatabaseUtilites instance
  */
 public static DatabaseUtilites getInstance(){
     return databaseUtilites;
 }
 
-/*
+/**
 Opens the database connection and then calls setupDatabase which creates the tables if they do not already exist
  */
 private void openConnection(){
@@ -59,7 +62,7 @@ private void openConnection(){
     }
 }
 
-/*
+/**
 sets up tables which do not already exist
  */
 private void setupDatabase(){
@@ -82,7 +85,7 @@ private void setupDatabase(){
 }
 
 
-/*
+/**
 Setup query prepared statements
  */
 private void setupPreparedStatements(){
@@ -92,6 +95,7 @@ private void setupPreparedStatements(){
         queryInsertAccount = conn.prepareStatement(INSERT_ACCOUNT);
         queryInsertMessage = conn.prepareStatement(INSERT_MESSAGE);
 
+        queryRetrieveCid = conn.prepareStatement(RETRIEVE_CID);
 
     } catch (SQLException e){
         System.out.println("Failed to setup prepared statements: " + e.getMessage());
@@ -99,7 +103,7 @@ private void setupPreparedStatements(){
 
 }
 
-/*
+/**
 Closes the connection when the application closes
  */
 private void closeConnection(){
@@ -114,6 +118,9 @@ private void closeConnection(){
         if(queryInsertMessage != null){
             queryInsertMessage.close();
         }
+        if(queryInsertAccount != null){
+            queryInsertAccount.close();
+        }
         if(conn != null){
             conn.close();
         }
@@ -123,7 +130,7 @@ private void closeConnection(){
 
 }
 
-/*
+/**
 Add a contact to the database if the username is not greater than 255 characters and the ipv4 variable matches
 the ipv4 pattern matcher
  */
@@ -146,14 +153,33 @@ public boolean addContact(String username, String ipv4){
 }
 
 
-public boolean addAccount(){
+public boolean addAccount(String username, String pass, String salt){
 
-    return true;
+
+    if(username.length() <= 255 && pass.length() <= 255 && salt.length() == 88){
+     try {
+         ResultSet result = queryRetrieveCid.executeQuery();
+         result.next();
+
+             queryInsertAccount.setInt(1, result.getInt(1));
+             queryInsertAccount.setString(2, username);
+             queryInsertAccount.setString(3, pass);
+             queryInsertAccount.setString(4, salt);
+             queryInsertAccount.execute();
+
+             return true;
+
+     }catch(SQLException e){
+         System.out.println("Failed to add account: "+ e.getMessage());
+     }
+    }
+
+    return false;
 }
 
-public boolean addMessage(){
+public boolean addMessage(int cid, int uid, String message, String dt){
 
-    return true;
+    if()
 }
 
 

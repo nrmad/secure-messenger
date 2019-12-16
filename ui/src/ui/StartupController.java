@@ -1,7 +1,7 @@
 package ui;
 
 
-public class Controller {
+public class StartupController {
 
     public void initialize(){
 

@@ -10,6 +10,7 @@ private static DatabaseUtilites databaseUtilites = new DatabaseUtilites();
 private Connection conn;
 private Statement statement;
 private Pattern ipv4Pattern = Pattern.compile("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$");
+private Pattern dateTime = Pattern.compile("^\\d{2}-\\d{2}-\\d{4} \\d{2}:\\d{2}:\\d{2}$");
 
 public String DB_NAME = "secure-messenger.db";
 // connection string could not be psf because concatenation with File.separator renders the string null
@@ -19,21 +20,28 @@ public String CONNECTION_STRING = "jdbc:sqlite:" + "resources" + File.separator 
 public static final String CREATE_CONTACTS_TABLE = "CREATE TABLE IF NOT EXISTS contacts(cid INTEGER PRIMARY KEY, username VARCHAR(255), ipv4 CHAR(15))";
 public static final String CREATE_ACCOUNTS_TABLE = "CREATE TABLE IF NOT EXISTS accounts(uid INTEGER PRIMARY KEY, cid INTEGER NOT NULL , username VARCHAR(255), pass varchar(255), salt char(88)," +
                                                    "FOREIGN KEY (cid) REFERENCES contacts(cid))";
-public static final String CREATE_MESSAGES_TABLE = "CREATE TABLE IF NOT EXISTS messages(mid INTEGER, cid INTEGER, uid INTEGER, message TEXT, dt TEXT, FOREIGN KEY (cid) REFERENCES contacts(cid)," +
-                                                    "FOREIGN KEY (uid) REFERENCES accounts(uid), PRIMARY KEY(mid, cid, uid))";
+public static final String CREATE_CHAT_TABLE = "CREATE TABLE IF NOT EXISTS chats(chid INTEGER, cid INTEGER, uid INTEGER, FOREIGN KEY (cid) REFERENCES contacts(cid)," +
+                                                "FOREIGN KEY (uid) REFERENCES accounts(uid), PRIMARY KEY(chid))";
+public static final String CREATE_MESSAGES_TABLE = "CREATE TABLE IF NOT EXISTS messages(mid INTEGER PRIMARY KEY, chid INTEGER, message TEXT, dt TEXT, status TEXT, FOREIGN KEY (chid) REFERENCES contacts(chid))";
+
 
 public static final String INSERT_CONTACT = "INSERT INTO contacts(username, ipv4) VALUES(?, ?)";
 public static final String INSERT_ACCOUNT = "INSERT INTO accounts(cid, username, pass, salt) VALUES (?,?,?,?)";
-public static final String INSERT_MESSAGE = "INSERT INTO messages(cid, uid, message, dt) VALUES(?,?,?,?) ";
+public static final String INSERT_CHAT = "INSERT INTO chats( cid, uid) VALUES (? ?)";
+public static final String INSERT_MESSAGE = "INSERT INTO messages( chid, message, dt, status) VALUES(?,?,?,?,?)";
 
 public static final String RETRIEVE_CID = "SELECT last_insert_rowid()";
+public static final String RETRIEVE_CHAT = "SELECT chid FROM chat WHERE cid = ? AND uid = ?";
+
 //public static final String SELECT_MESSAGES = "SELECT * FROM MESSAGES WHERE ";
 
 private PreparedStatement queryInsertContact;
 private PreparedStatement queryInsertAccount;
+private PreparedStatement queryInsertChat;
 private PreparedStatement queryInsertMessage;
 
 private PreparedStatement queryRetrieveCid;
+private PreparedStatement queryConfirmCidUid;
 
 private  DatabaseUtilites(){
         openConnection();
@@ -73,6 +81,7 @@ private void setupDatabase(){
         conn.setAutoCommit(false);
         statement.addBatch(CREATE_CONTACTS_TABLE);
         statement.addBatch(CREATE_ACCOUNTS_TABLE);
+        statement.addBatch(CREATE_CHAT_TABLE);
         statement.addBatch(CREATE_MESSAGES_TABLE);
 
         statement.executeBatch();
@@ -93,9 +102,11 @@ private void setupPreparedStatements(){
     try{
         queryInsertContact = conn.prepareStatement(INSERT_CONTACT);
         queryInsertAccount = conn.prepareStatement(INSERT_ACCOUNT);
+        queryInsertChat = conn.prepareStatement(INSERT_CHAT);
         queryInsertMessage = conn.prepareStatement(INSERT_MESSAGE);
 
         queryRetrieveCid = conn.prepareStatement(RETRIEVE_CID);
+        queryConfirmCidUid = conn.prepareStatement(RETRIEVE_CHAT);
 
     } catch (SQLException e){
         System.out.println("Failed to setup prepared statements: " + e.getMessage());
@@ -115,11 +126,17 @@ private void closeConnection(){
         if(queryInsertAccount != null){
             queryInsertAccount.close();
         }
+        if(queryInsertChat != null){
+            queryInsertChat.close();
+        }
         if(queryInsertMessage != null){
             queryInsertMessage.close();
         }
-        if(queryInsertAccount != null){
-            queryInsertAccount.close();
+        if(queryRetrieveCid != null){
+            queryRetrieveCid.close();
+        }
+        if(queryConfirmCidUid != null){
+            queryConfirmCidUid.close();
         }
         if(conn != null){
             conn.close();
@@ -152,12 +169,19 @@ public boolean addContact(String username, String ipv4){
     return false;
 }
 
-
-public boolean addAccount(String username, String pass, String salt){
+    /**
+     * Add an account to the database if the username, password and salt are within test bounds
+     * @param username the accounts identifier
+     * @param pass the accounts password
+     * @param salt the salt for the password
+     * @return return true if successful and false if failed
+     */
+    public boolean addAccount(String username, String pass, String salt){
 
 
     if(username.length() <= 255 && pass.length() <= 255 && salt.length() == 88){
      try {
+         // try and find a better way to do this
          ResultSet result = queryRetrieveCid.executeQuery();
          result.next();
 
@@ -177,9 +201,60 @@ public boolean addAccount(String username, String pass, String salt){
     return false;
 }
 
-public boolean addMessage(int cid, int uid, String message, String dt){
+    /**
+     * Add a chat record to the database for the relevant account and contact
+     * @param cid the contact id
+     * @param uid the account id
+     * @return true if the operation is successful and false if not
+     */
+    public boolean addChat( int cid, int uid){
 
-    if()
+        // COULD VALIDATE THE INPUTS HERE
+        try{
+            queryInsertChat.setInt(2, cid);
+            queryInsertChat.setInt(3,uid);
+            queryInsertChat.execute();
+
+            return true;
+
+        } catch(SQLException e){
+            System.out.println("Failed to add chat: " + e.getMessage());
+        }
+    return false;
+}
+
+    /**
+     * Add a message record to the database after ccnfirming that a chat record exits for the account and contact
+     * @param cid the contact id
+     * @param uid the account id
+     * @param message the message string encrypted with the accounts public key
+     * @param dt the datetime string
+     * @param status the status enum to determine if the message was sent, recieved or pending successful transmission
+     * @return true if the operation is successful and false if not
+     */
+    public boolean addMessage(int cid,int uid, String message, String dt, MessageStatus status){
+
+    if(dateTime.matcher(dt).matches()){
+
+        try {
+            queryConfirmCidUid.setInt(1, cid);
+            queryConfirmCidUid.setInt(2, uid);
+            ResultSet result = queryConfirmCidUid.executeQuery();
+
+            if(result.next()){
+                queryInsertMessage.setInt(1, result.getInt(1));
+                queryInsertMessage.setString(2,message);
+                queryInsertMessage.setString(3, dt);
+                queryInsertMessage.setString(4,status.toString());
+
+                return true;
+            }
+
+        }catch(SQLException e){
+            System.out.println("Failed to add message: " + e.getMessage());
+        }
+    }
+    return false;
 }
 
 

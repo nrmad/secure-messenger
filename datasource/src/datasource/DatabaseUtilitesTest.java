@@ -50,6 +50,11 @@ public class DatabaseUtilitesTest {
     }
 
     @org.junit.Test
+    public void addChat(){
+
+    }
+
+    @org.junit.Test
     public void addMessage() {
         fail();
     }

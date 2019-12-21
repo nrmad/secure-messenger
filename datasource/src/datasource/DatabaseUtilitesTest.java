@@ -1,6 +1,9 @@
 package datasource;
 
+import org.junit.After;
+
 import java.security.SecureRandom;
+import java.sql.Connection;
 import java.util.Base64;
 import java.util.Random;
 
@@ -10,6 +13,14 @@ public class DatabaseUtilitesTest {
 
 
     private DatabaseUtilites databaseUtilites = DatabaseUtilites.getInstance();
+    private Connection conn;
+
+    @After
+    public void tearDown(){
+
+        databaseUtilites.tempMethod();
+
+    }
 
     @org.junit.Test
     public void getInstance() {
@@ -18,10 +29,11 @@ public class DatabaseUtilitesTest {
 
     @org.junit.Test
     public void addContact() {
-        assertTrue(databaseUtilites.addContact("nrmad","127.0.0.1"));
-        assertFalse(databaseUtilites.addContact("azt4er", "127-0-0-1"));
-        assertFalse(databaseUtilites.addContact("benny", "1234.0.0.1"));
-        assertFalse(databaseUtilites.addContact("azt4er", "127.a.a.a"));
+        assertTrue(databaseUtilites.addContact(1,"nrmad","127.0.0.1"));
+        assertFalse(databaseUtilites.addContact(2,"azt4er", "127-0-0-1"));
+        assertFalse(databaseUtilites.addContact(3,"benny", "1234.0.0.1"));
+        assertFalse(databaseUtilites.addContact(4,"azt4er", "127.a.a.a"));
+        assertFalse(databaseUtilites.addContact(1,"azt4er","127.0.0.1"));
 
     }
 
@@ -44,18 +56,36 @@ public class DatabaseUtilitesTest {
 //            System.out.println(e.getMessage());
 //        }
 
-        databaseUtilites.addContact("accountboi","127.0.0.1");
+        databaseUtilites.addContact(1,"accountboi","127.0.0.1");
         assertTrue(databaseUtilites.addAccount("james", "password"+stringSalt, stringSalt));
         //assertFalse(databaseUtilites.addAccount("sneakboi","passSneak"+stringSalt, stringSalt));
     }
 
     @org.junit.Test
     public void addChat(){
+        databaseUtilites.addContact(1, "accountboi", "127.0.0.1");
 
+        Random RANDOM = new SecureRandom();
+        byte[] salt = new byte[64];
+        RANDOM.nextBytes(salt);
+        String stringSalt = Base64.getEncoder().encodeToString(salt);
+
+        databaseUtilites.addAccount("james", "password"+stringSalt, stringSalt);
+        assertTrue(databaseUtilites.addChat(1,1));
     }
+
 
     @org.junit.Test
     public void addMessage() {
-        fail();
+        databaseUtilites.addContact(1, "accountboi", "127.0.0.1");
+
+        Random RANDOM = new SecureRandom();
+        byte[] salt = new byte[64];
+        RANDOM.nextBytes(salt);
+        String stringSalt = Base64.getEncoder().encodeToString(salt);
+
+        databaseUtilites.addAccount("james", "password"+stringSalt, stringSalt);
+        databaseUtilites.addChat(1,1);
+        assertTrue(databaseUtilites.addMessage(1,1,"yeet","12-12-2019 11:48:22", MessageStatus.PENDING));
     }
 }

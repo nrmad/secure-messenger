@@ -35,7 +35,7 @@
         <Region prefHeight="10" />
         <ListView fx:id="chatBox" VBox.vgrow="ALWAYS" />
             <Region prefHeight="10" />
-            <TextArea fx:id="chatPrompt" prefHeight="0.0" prefWidth="1632.0" promptText="Enter message" />
+            <TextArea fx:id="chatPrompt" prefWidth="1632.0" promptText="Enter message" />
         </VBox>
 </center>
 

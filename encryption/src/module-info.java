@@ -1,0 +1,4 @@
+module encryption {
+
+    exports encryption;
+}

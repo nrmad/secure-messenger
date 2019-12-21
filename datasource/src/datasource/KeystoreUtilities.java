@@ -19,4 +19,10 @@ public class KeystoreUtilities {
 //        RANDOM.nextBytes(salt);
 //        return Base64.getEncoder().encodeToString(salt);
 //    }
+
+    public void createKeyStore(String username, String password){
+
+
+
+    }
 }

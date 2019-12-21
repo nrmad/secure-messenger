@@ -4,11 +4,10 @@ import java.io.File;
 import java.sql.*;
 import java.util.regex.Pattern;
 
-public class DatabaseUtilites {
+    public class DatabaseUtilites {
 
 private static DatabaseUtilites databaseUtilites = new DatabaseUtilites();
 private Connection conn;
-private Statement statement;
 private Pattern ipv4Pattern = Pattern.compile("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$");
 private Pattern dateTime = Pattern.compile("^\\d{2}-\\d{2}-\\d{4} \\d{2}:\\d{2}:\\d{2}$");
 
@@ -17,21 +16,21 @@ public String DB_NAME = "secure-messenger.db";
 public String CONNECTION_STRING = "jdbc:sqlite:" + "resources" + File.separator + DB_NAME;
 
 
-public static final String CREATE_CONTACTS_TABLE = "CREATE TABLE IF NOT EXISTS contacts(cid INTEGER PRIMARY KEY, username VARCHAR(255), ipv4 CHAR(15))";
+public static final String CREATE_CONTACTS_TABLE = "CREATE TABLE IF NOT EXISTS contacts(cid INTEGER PRIMARY KEY, cnum INTEGER NOT NULL UNIQUE, username VARCHAR(255), ipv4 CHAR(15))";
 public static final String CREATE_ACCOUNTS_TABLE = "CREATE TABLE IF NOT EXISTS accounts(uid INTEGER PRIMARY KEY, cid INTEGER NOT NULL , username VARCHAR(255), pass varchar(255), salt char(88)," +
                                                    "FOREIGN KEY (cid) REFERENCES contacts(cid))";
-public static final String CREATE_CHAT_TABLE = "CREATE TABLE IF NOT EXISTS chats(chid INTEGER, cid INTEGER, uid INTEGER, FOREIGN KEY (cid) REFERENCES contacts(cid)," +
-                                                "FOREIGN KEY (uid) REFERENCES accounts(uid), PRIMARY KEY(chid))";
+public static final String CREATE_CHAT_TABLE = "CREATE TABLE IF NOT EXISTS chats(chid INTEGER PRIMARY KEY, cnum INTEGER, uid INTEGER, FOREIGN KEY (cnum) REFERENCES contacts(cnum)," +
+                                                "FOREIGN KEY (uid) REFERENCES accounts(uid))";
 public static final String CREATE_MESSAGES_TABLE = "CREATE TABLE IF NOT EXISTS messages(mid INTEGER PRIMARY KEY, chid INTEGER, message TEXT, dt TEXT, status TEXT, FOREIGN KEY (chid) REFERENCES contacts(chid))";
 
 
-public static final String INSERT_CONTACT = "INSERT INTO contacts(username, ipv4) VALUES(?, ?)";
+public static final String INSERT_CONTACT = "INSERT INTO contacts(cnum,username,ipv4) VALUES(? ,?, ?)";
 public static final String INSERT_ACCOUNT = "INSERT INTO accounts(cid, username, pass, salt) VALUES (?,?,?,?)";
-public static final String INSERT_CHAT = "INSERT INTO chats( cid, uid) VALUES (? ?)";
-public static final String INSERT_MESSAGE = "INSERT INTO messages( chid, message, dt, status) VALUES(?,?,?,?,?)";
+public static final String INSERT_CHAT = "INSERT INTO chats( cnum, uid) VALUES(?, ?)";
+public static final String INSERT_MESSAGE = "INSERT INTO messages(chid, message, dt, status) VALUES(?,?,?,?)";
 
 public static final String RETRIEVE_CID = "SELECT last_insert_rowid()";
-public static final String RETRIEVE_CHAT = "SELECT chid FROM chat WHERE cid = ? AND uid = ?";
+public static final String RETRIEVE_CHAT = "SELECT chid FROM chats WHERE cnum = ? AND uid = ?";
 
 //public static final String SELECT_MESSAGES = "SELECT * FROM MESSAGES WHERE ";
 
@@ -57,6 +56,7 @@ public static DatabaseUtilites getInstance(){
 
 /**
 Opens the database connection and then calls setupDatabase which creates the tables if they do not already exist
+
  */
 private void openConnection(){
 
@@ -76,7 +76,7 @@ sets up tables which do not already exist
 private void setupDatabase(){
 
     try{
-        statement = conn.createStatement();
+        Statement statement = conn.createStatement();
 
         conn.setAutoCommit(false);
         statement.addBatch(CREATE_CONTACTS_TABLE);
@@ -96,6 +96,7 @@ private void setupDatabase(){
 
 /**
 Setup query prepared statements
+
  */
 private void setupPreparedStatements(){
 
@@ -151,13 +152,14 @@ private void closeConnection(){
 Add a contact to the database if the username is not greater than 255 characters and the ipv4 variable matches
 the ipv4 pattern matcher
  */
-public boolean addContact(String username, String ipv4){
+public boolean addContact(int cnum, String username, String ipv4){
 
     if(ipv4Pattern.matcher(ipv4).matches() && username.length() <= 255){
 
         try {
-            queryInsertContact.setString(1, username);
-            queryInsertContact.setString(2, ipv4);
+            queryInsertContact.setInt(1,cnum);
+            queryInsertContact.setString(2, username);
+            queryInsertContact.setString(3, ipv4);
             queryInsertContact.execute();
             return true;
 
@@ -203,16 +205,16 @@ public boolean addContact(String username, String ipv4){
 
     /**
      * Add a chat record to the database for the relevant account and contact
-     * @param cid the contact id
+     * @param cnum the contact id
      * @param uid the account id
      * @return true if the operation is successful and false if not
      */
-    public boolean addChat( int cid, int uid){
+    public boolean addChat( int cnum, int uid){
 
         // COULD VALIDATE THE INPUTS HERE
         try{
-            queryInsertChat.setInt(2, cid);
-            queryInsertChat.setInt(3,uid);
+            queryInsertChat.setInt(1, cnum);
+            queryInsertChat.setInt(2,uid);
             queryInsertChat.execute();
 
             return true;
@@ -225,19 +227,19 @@ public boolean addContact(String username, String ipv4){
 
     /**
      * Add a message record to the database after ccnfirming that a chat record exits for the account and contact
-     * @param cid the contact id
+     * @param cnum the contact id
      * @param uid the account id
      * @param message the message string encrypted with the accounts public key
      * @param dt the datetime string
      * @param status the status enum to determine if the message was sent, recieved or pending successful transmission
      * @return true if the operation is successful and false if not
      */
-    public boolean addMessage(int cid,int uid, String message, String dt, MessageStatus status){
+    public boolean addMessage(int cnum,int uid, String message, String dt, MessageStatus status){
 
     if(dateTime.matcher(dt).matches()){
 
         try {
-            queryConfirmCidUid.setInt(1, cid);
+            queryConfirmCidUid.setInt(1, cnum);
             queryConfirmCidUid.setInt(2, uid);
             ResultSet result = queryConfirmCidUid.executeQuery();
 
@@ -246,7 +248,7 @@ public boolean addContact(String username, String ipv4){
                 queryInsertMessage.setString(2,message);
                 queryInsertMessage.setString(3, dt);
                 queryInsertMessage.setString(4,status.toString());
-
+                queryInsertMessage.execute();
                 return true;
             }
 
@@ -257,5 +259,21 @@ public boolean addContact(String username, String ipv4){
     return false;
 }
 
+
+// A TEMPORARY METHOD FOR TESTING PURPOSES
+public boolean tempMethod(){
+
+        try {
+            Statement statement = conn.createStatement();
+            statement.execute("DELETE FROM contacts");
+            statement.execute("DELETE FROM accounts");
+            statement.execute("DELETE FROM chats");
+            statement.execute("DELETE FROM messages");
+            return true;
+        }catch(SQLException e){
+            System.out.println(e.getMessage());
+}
+return false;
+}
 
 }

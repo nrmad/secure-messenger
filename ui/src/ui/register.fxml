@@ -11,12 +11,12 @@
 <GridPane alignment="CENTER" hgap="10" prefHeight="400.0" prefWidth="600.0" vgap="10" xmlns="http://javafx.com/javafx/8.0.172-ea"
           xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.RegisterController">
 
-            <Label text="Enter username: " GridPane.columnIndex="0" GridPane.rowIndex="0" />
-            <TextField fx:id="username" GridPane.columnIndex="1" GridPane.rowIndex="0" prefHeight="26.0" prefWidth="212.0"/>
-            <Label text="Enter password: " GridPane.columnIndex="0" GridPane.rowIndex="1" />
-            <PasswordField fx:id="password" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <Label text="Confirm Password:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-            <PasswordField fx:id="confirmedPass" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-            <Button fx:id="createAccountBtn" prefHeight="26.0" prefWidth="212.0" text="Confirm" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <!--<Label text="Enter username: " GridPane.columnIndex="0" GridPane.rowIndex="0" />-->
+            <TextField fx:id="username" GridPane.columnIndex="0" GridPane.rowIndex="0" prefHeight="26.0" prefWidth="212.0" promptText="username"/>
+            <!--<Label text="Enter password: " GridPane.columnIndex="0" GridPane.rowIndex="1" />-->
+            <PasswordField fx:id="password" GridPane.columnIndex="0" GridPane.rowIndex="1" promptText="password"/>
+            <!--<Label text="Confirm Password:" GridPane.columnIndex="0" GridPane.rowIndex="2" />-->
+            <PasswordField fx:id="confirmedPass" GridPane.columnIndex="0" GridPane.rowIndex="2" promptText="confirm password"/>
+            <Button fx:id="createAccountBtn" prefHeight="26.0" prefWidth="212.0" text="Confirm" GridPane.columnIndex="0" GridPane.rowIndex="3" />
 
 </GridPane>

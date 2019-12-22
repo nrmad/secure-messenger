@@ -4,10 +4,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.util.Base64;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -52,6 +49,20 @@ public class EncryptionUtilities {
 
         } catch(NoSuchAlgorithmException | NoSuchPaddingException e){
             System.out.println(e.getMessage());
+        }
+
+        return null;
+    }
+
+    public static KeyPair generateKeyPair(){
+
+        try {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+            keyPairGenerator.initialize(3072);
+            return keyPairGenerator.generateKeyPair();
+
+        }catch(NoSuchAlgorithmException e){
+            System.out.println("Failed to generate key pair: "+e.getMessage());
         }
 
         return null;

@@ -29,11 +29,11 @@ public class DatabaseUtilitesTest {
 
     @org.junit.Test
     public void addContact() {
-        assertTrue(databaseUtilites.addContact(1,"nrmad","127.0.0.1"));
-        assertFalse(databaseUtilites.addContact(2,"azt4er", "127-0-0-1"));
-        assertFalse(databaseUtilites.addContact(3,"benny", "1234.0.0.1"));
-        assertFalse(databaseUtilites.addContact(4,"azt4er", "127.a.a.a"));
-        assertFalse(databaseUtilites.addContact(1,"azt4er","127.0.0.1"));
+        assertTrue(databaseUtilites.addContact(1,"nrmad","127.0.0.1",1));
+        assertFalse(databaseUtilites.addContact(2,"azt4er", "127-0-0-1",1));
+        assertFalse(databaseUtilites.addContact(3,"benny", "1234.0.0.1",1));
+        assertFalse(databaseUtilites.addContact(4,"azt4er", "127.a.a.a",1));
+        assertFalse(databaseUtilites.addContact(1,"azt4er","127.0.0.1",1));
 
     }
 
@@ -56,14 +56,14 @@ public class DatabaseUtilitesTest {
 //            System.out.println(e.getMessage());
 //        }
 
-        databaseUtilites.addContact(1,"accountboi","127.0.0.1");
+        databaseUtilites.addContact(1,"accountboi","127.0.0.1",1);
         assertTrue(databaseUtilites.addAccount("james", "password"+stringSalt, stringSalt));
         //assertFalse(databaseUtilites.addAccount("sneakboi","passSneak"+stringSalt, stringSalt));
     }
 
     @org.junit.Test
     public void addChat(){
-        databaseUtilites.addContact(1, "accountboi", "127.0.0.1");
+        databaseUtilites.addContact(1, "accountboi", "127.0.0.1",1);
 
         Random RANDOM = new SecureRandom();
         byte[] salt = new byte[64];
@@ -77,7 +77,7 @@ public class DatabaseUtilitesTest {
 
     @org.junit.Test
     public void addMessage() {
-        databaseUtilites.addContact(1, "accountboi", "127.0.0.1");
+        databaseUtilites.addContact(1, "accountboi", "127.0.0.1",1);
 
         Random RANDOM = new SecureRandom();
         byte[] salt = new byte[64];

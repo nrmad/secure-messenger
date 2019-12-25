@@ -17,6 +17,8 @@
             <PasswordField fx:id="password" GridPane.columnIndex="0" GridPane.rowIndex="1" promptText="password"/>
             <!--<Label text="Confirm Password:" GridPane.columnIndex="0" GridPane.rowIndex="2" />-->
             <PasswordField fx:id="confirmedPass" GridPane.columnIndex="0" GridPane.rowIndex="2" promptText="confirm password"/>
-            <Button fx:id="createAccountBtn" prefHeight="26.0" prefWidth="212.0" text="Confirm" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+            <TextField fx:id="ipTextField" GridPane.columnIndex="0" GridPane.rowIndex="3" promptText="node ipv4 address"/>
+            <TextField fx:id="portTextField" GridPane.columnIndex="0" GridPane.rowIndex="4" promptText="node port number"/>
+            <Button fx:id="createAccountBtn" prefHeight="26.0" prefWidth="212.0" text="Confirm" GridPane.columnIndex="0" GridPane.rowIndex="5" />
 
 </GridPane>

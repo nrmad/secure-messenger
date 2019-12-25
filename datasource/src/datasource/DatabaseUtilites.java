@@ -16,7 +16,7 @@ public String DB_NAME = "secure-messenger.db";
 public String CONNECTION_STRING = "jdbc:sqlite:" + "resources" + File.separator + DB_NAME;
 
 
-public static final String CREATE_CONTACTS_TABLE = "CREATE TABLE IF NOT EXISTS contacts(cid INTEGER PRIMARY KEY, cnum INTEGER NOT NULL UNIQUE, username VARCHAR(255), ipv4 CHAR(15))";
+public static final String CREATE_CONTACTS_TABLE = "CREATE TABLE IF NOT EXISTS contacts(cid INTEGER PRIMARY KEY, cnum INTEGER NOT NULL UNIQUE, username VARCHAR(255), ipv4 CHAR(15), port INTEGER)";
 public static final String CREATE_ACCOUNTS_TABLE = "CREATE TABLE IF NOT EXISTS accounts(uid INTEGER PRIMARY KEY, cid INTEGER NOT NULL , username VARCHAR(255), pass varchar(255), salt char(88)," +
                                                    "FOREIGN KEY (cid) REFERENCES contacts(cid))";
 public static final String CREATE_CHAT_TABLE = "CREATE TABLE IF NOT EXISTS chats(chid INTEGER PRIMARY KEY, cnum INTEGER, uid INTEGER, FOREIGN KEY (cnum) REFERENCES contacts(cnum)," +
@@ -24,7 +24,7 @@ public static final String CREATE_CHAT_TABLE = "CREATE TABLE IF NOT EXISTS chats
 public static final String CREATE_MESSAGES_TABLE = "CREATE TABLE IF NOT EXISTS messages(mid INTEGER PRIMARY KEY, chid INTEGER, message TEXT, dt TEXT, status TEXT, FOREIGN KEY (chid) REFERENCES contacts(chid))";
 
 
-public static final String INSERT_CONTACT = "INSERT INTO contacts(cnum,username,ipv4) VALUES(? ,?, ?)";
+public static final String INSERT_CONTACT = "INSERT INTO contacts(cnum,username,ipv4, port) VALUES(? ,?, ?, ?)";
 public static final String INSERT_ACCOUNT = "INSERT INTO accounts(cid, username, pass, salt) VALUES (?,?,?,?)";
 public static final String INSERT_CHAT = "INSERT INTO chats( cnum, uid) VALUES(?, ?)";
 public static final String INSERT_MESSAGE = "INSERT INTO messages(chid, message, dt, status) VALUES(?,?,?,?)";
@@ -152,7 +152,7 @@ private void closeConnection(){
 Add a contact to the database if the username is not greater than 255 characters and the ipv4 variable matches
 the ipv4 pattern matcher
  */
-public boolean addContact(int cnum, String username, String ipv4){
+public boolean addContact(int cnum, String username, String ipv4, int port){
 
     if(ipv4Pattern.matcher(ipv4).matches() && username.length() <= 255){
 
@@ -160,6 +160,7 @@ public boolean addContact(int cnum, String username, String ipv4){
             queryInsertContact.setInt(1,cnum);
             queryInsertContact.setString(2, username);
             queryInsertContact.setString(3, ipv4);
+            queryInsertContact.setInt(4, port);
             queryInsertContact.execute();
             return true;
 

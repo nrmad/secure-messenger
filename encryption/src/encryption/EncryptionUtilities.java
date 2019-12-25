@@ -57,8 +57,8 @@ public class EncryptionUtilities {
     public static KeyPair generateKeyPair(){
 
         try {
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
-            keyPairGenerator.initialize(3072);
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(3072, new SecureRandom());
             return keyPairGenerator.generateKeyPair();
 
         }catch(NoSuchAlgorithmException e){

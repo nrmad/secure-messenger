@@ -6,15 +6,16 @@ import java.net.UnknownHostException;
 public class NetworkingUtilities {
 
 
-    public static String getInetAddress(){
+    public static InetAddress getInetAddress(){
         try {
-            InetAddress inetAddress = InetAddress.getLocalHost();
-            return inetAddress.getHostAddress();
+            return InetAddress.getLocalHost();
 
         }catch(UnknownHostException e){
             System.out.println("Cannot obtain local host address" + e.getMessage());
         }
         return null;
     }
+
+
 
 }

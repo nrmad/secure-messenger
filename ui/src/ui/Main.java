@@ -13,7 +13,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
 
         DatabaseUtilites databaseUtilites = DatabaseUtilites.getInstance();
-        Parent root = FXMLLoader.load(getClass().getResource("ui/startup.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("/ui/startup.fxml"));
         primaryStage.setTitle("Secure Messenger");
         primaryStage.setScene(new Scene(root, 800, 400));
         //primaryStage.setMaximized(true);

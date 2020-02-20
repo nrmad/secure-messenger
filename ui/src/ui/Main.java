@@ -15,7 +15,7 @@ public class Main extends Application {
         Parent root = FXMLLoader.load(getClass().getResource("/ui/startup.fxml"));
         primaryStage.setTitle("Secure Messenger");
         primaryStage.setScene(new Scene(root, 800, 400));
-        //primaryStage.setMaximized(true);
+        //primaryStage.setMaximized(true);ha,is
         primaryStage.show();
     }
 

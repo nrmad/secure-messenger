@@ -16,6 +16,14 @@ public class NetworkingUtilities {
         return null;
     }
 
+    public static byte[] stringtoPaddedBinary(String convert, int bits) {
 
+        int tempVal;
+
+        if ((tempVal = Integer.valueOf(convert)) < (bits^16)) {
+            return String.format("%" + bits + "s", Integer.toBinaryString(tempVal)).replace(" ", "0").getBytes();
+        }
+        return null;
+    }
 
 }

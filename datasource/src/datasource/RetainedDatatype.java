@@ -1,17 +1,20 @@
 package datasource;
 
-public enum MessageStatus {
-    PENDING(0),
-    SENT(1),
-    RECIEVED(2);
+public enum RetainedDatatype {
+
+    CONTACT(0),
+    IP(1),
+    TLSPORT(2);
 
     private final int code;
 
-    MessageStatus(int code){
+    RetainedDatatype(int code){
         this.code = code;
     }
 
     public int getCode(){
         return code;
     }
+
+
 }

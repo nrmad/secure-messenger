@@ -131,7 +131,8 @@ private void setupPreparedStatements(){
         queryRetrieveMaxUid = conn.prepareStatement(RETRIEVE_MAX_UID);
         queryRetrieveMaxMid = conn.prepareStatement(RETRIEVE_MAX_MID);
 
-    } catch (SQLException e){
+    } catch (SQLException e){// !!! ADDD NEW METHOD FOR INSERTING RETAINED DATA
+
         System.out.println("Failed to setup prepared statements: " + e.getMessage());
     }
 
@@ -330,7 +331,6 @@ private void closeConnection(){
 
 
 
-    // !!! UPDATE MESSAGE STATUS SO IT CAN GET CAN GET ENUM FROM INT FOR GETTING BACK FROM DB
     /**
      * Add a message record to the database
      * @param cid the contact id
@@ -364,7 +364,6 @@ private void closeConnection(){
 }
 
 
-// !!! ADDD NEW METHOD FOR INSERTING RETAINED DATA
     boolean addRetained(int uid, String cid, RetainedDatatype datatype){
 
          try{

@@ -206,7 +206,7 @@ private void closeConnection(){
     */
     public boolean addContact(String cid, String alias, String ipv4, int tlsport){
 
-    if(ipv4Pattern.matcher(ipv4).matches() && alias.length() <= 255 && tlsport >= 0 && tlsport <= 65535){
+    if(ipv4Pattern.matcher(ipv4).matches() && alias.length() <= 256 && tlsport >= 0 && tlsport <= 65535){
 
         try {
             queryInsertContact.setString(1,cid);
@@ -234,7 +234,7 @@ private void closeConnection(){
      */
     public boolean addAccount(String username, String pass, String salt, String cid, String alias, String ipv4, int tlsport){
 
-    if(username.length() <= 255 && pass.length() <= 255 && salt.length() == 88){
+    if(username.length() <= 256 && pass.length() <= 256 && salt.length() == 88){
      try {
          int uid = accountCounter++;
 
@@ -328,7 +328,6 @@ private void closeConnection(){
         return false;
 
     }
-
 
 
     /**

@@ -1,4 +1,4 @@
-package encryption;
+package security;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;

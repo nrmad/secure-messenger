@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="1080" prefWidth="1920.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.MessageBoardController">
+
+<top>
+        <MenuBar>
+            <Menu text="File">
+                <items>
+                    <MenuItem text="Exit" />
+                    <SeparatorMenuItem />
+                </items>
+            </Menu>
+        </MenuBar>
+</top>
+
+
+<center>
+    <VBox>
+    <padding><Insets bottom="20" left="15" right="5" top="20" /></padding>
+        <Label fx:id="chatUsername" text="herer" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <Region prefHeight="10" />
+        <ListView fx:id="chatBox" VBox.vgrow="ALWAYS" />
+            <Region prefHeight="10" />
+            <TextArea fx:id="chatPrompt" prefWidth="1632.0" promptText="Enter message" />
+        </VBox>
+</center>
+
+<right>
+    <VBox>
+        <padding><Insets bottom="20" left="5" right="15" top="20" /></padding>
+        <Label text="" />
+        <Region prefHeight="10" />
+        <TextField fx:id="contactSearch" promptText="Search Contacts" />
+        <Region prefHeight="10" />
+        <ListView fx:id="contactList" VBox.vgrow="ALWAYS" />
+    </VBox>
+</right>
+
+</BorderPane>

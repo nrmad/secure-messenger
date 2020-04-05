@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<TabPane  xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.StartupController"
+            tabClosingPolicy="UNAVAILABLE">
+
+    <tabs>
+        <Tab fx:id="LoginTab" text="Login">
+            <fx:include fx:id="LoginController" source ="login.fxml"/>
+        </Tab>
+        <Tab fx:id="RegisterTab" text="Register">
+            <fx:include fx:id="RegisterController" source="register.fxml"/>
+        </Tab>
+    </tabs>
+
+
+
+    <!--<children>-->
+    <!--<Label text="Username: " GridPane.columnIndex="0" GridPane.rowIndex="0" />-->
+    <!--<TextField fx:id="username" prefHeight="26.0" prefWidth="212.0" GridPane.columnIndex="1" GridPane.rowIndex="0" />-->
+    <!--<Label text="Password: " GridPane.columnIndex="0" GridPane.rowIndex="1" />-->
+    <!--<TextField fx:id="password" GridPane.columnIndex="1" GridPane.rowIndex="1" />-->
+
+    <!--<Button prefHeight="26.0" prefWidth="212.0" text="Login" GridPane.columnIndex="1" GridPane.rowIndex="2" />-->
+<!--</children>-->
+</TabPane>

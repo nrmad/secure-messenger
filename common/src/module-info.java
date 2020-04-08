@@ -1,7 +1,6 @@
 module common {
     requires datasource;
-    requires encryption;
     requires networking;
-
+    requires security;
     exports common;
 }

@@ -4,7 +4,7 @@ import java.io.File;
 import java.sql.*;
 import java.util.regex.Pattern;
 
-    public class DatabaseUtilites {
+public class DatabaseUtilites {
 
 private static DatabaseUtilites databaseUtilites = new DatabaseUtilites();
 private Connection conn;

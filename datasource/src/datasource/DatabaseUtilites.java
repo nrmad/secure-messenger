@@ -26,16 +26,16 @@ private static final String CREATE_CHATMESSAGES_TABLE = "CREATE TABLE IF NOT EXI
                                                             "FOREIGN KEY (uid, cid) REFERENCES chats(uid,cid), FOREIGN KEY (mid) REFERENCES messages(mid))";
 
 private static final String CREATE_MESSAGES_TABLE = "CREATE TABLE IF NOT EXISTS messages(mid INTEGER PRIMARY KEY, message TEXT NOT NULL, dt INTEGER NOT NULL, status INTEGER NOT NULL)";
-private static final String CREATE_RETAIN_TABLE = "CREATE TABLE IF NOT EXISTS retained(uid INTEGER, cid TEXT, datatype INTEGER NOT NULL, PRIMARY KEY(uid, cid), " +
+private static final String CREATE_RETAIN_TABLE = "CREATE TABLE IF NOT EXISTS synchronize(uid INTEGER, cid TEXT, datatype INTEGER NOT NULL, PRIMARY KEY(uid, cid), " +
                                                             "FOREIGN KEY (uid) REFERENCES accounts(uid), FOREIGN KEY (cid) REFERENCES contacts(cid))";
 
 private static final String INSERT_CONTACT = "INSERT INTO contacts(cid, alias, ipv4, tlsport) VALUES(?,?,?,?)";
-private static final String INSERT_ACCOUNT = "INSERT INTO accounts(uid, username, pass, salt) VALUES(?,?,?,?)";
+private static final String INSERT_ACCOUNT = "INSERT INTO accounts(uid, username, pass, salt, iterations) VALUES(?,?,?,?,?)";
 private static final String INSERT_ACCOUNTCONTACT = "INSERT INTO accountContact(uid, cid) VALUES(?,?)";
 private static final String INSERT_CHAT = "INSERT INTO chats(uid, cid) VALUES(?,?)";
 private static final String INSERT_CHATMESSAGES = "INSERT INTO chatMessages(uid, cid, mid) VALUES(?,?,?)";
 private static final String INSERT_MESSAGE = "INSERT INTO messages(mid, message, dt, status) VALUES(?,?,?,?)";
-private static final String INSERT_RETAIN = "INSERT INTO retained(uid, cid, datatype) VALUES(?,?,?)";
+private static final String INSERT_RETAIN = "INSERT INTO synchronize(uid, cid, datatype) VALUES(?,?,?)";
 
 private static final String RETRIEVE_MAX_UID = "SELECT COALESCE(MAX(uid), 0) FROM accounts";
 private static final String RETRIEVE_MAX_MID = "SELECT COALESCE(MAX(mid), 0) FROM messages";
@@ -131,7 +131,7 @@ private void setupPreparedStatements(){
         queryRetrieveMaxUid = conn.prepareStatement(RETRIEVE_MAX_UID);
         queryRetrieveMaxMid = conn.prepareStatement(RETRIEVE_MAX_MID);
 
-    } catch (SQLException e){// !!! ADDD NEW METHOD FOR INSERTING RETAINED DATA
+    } catch (SQLException e){
 
         System.out.println("Failed to setup prepared statements: " + e.getMessage());
     }
@@ -174,6 +174,9 @@ private void closeConnection(){
             queryInsertAccountContact.close();
         }
         if(queryInsertChat != null){
+            queryInsertRetain.close();
+        }
+        if(queryRetrieveMaxUid != null){
             queryInsertChat.close();
         }
         if(queryInsertChatMessages != null){
@@ -200,19 +203,21 @@ private void closeConnection(){
 
 }
 
+//    boolean addContacts()
+
     /**
     Add a contact to the database if the alias is not greater than 255 characters and the ipv4 variable matches
     the ipv4 pattern matcher
     */
-    public boolean addContact(String cid, String alias, String ipv4, int tlsport){
+    public boolean addContact(Contact contact){
 
-    if(ipv4Pattern.matcher(ipv4).matches() && alias.length() <= 256 && tlsport >= 0 && tlsport <= 65535){
+    if(ipv4Pattern.matcher(contact.getIpv4()).matches() && contact.getAlias().length() <= 256 && contact.getTlsPort() >= 1024 && contact.getTlsPort() <= 65535){
 
         try {
-            queryInsertContact.setString(1,cid);
-            queryInsertContact.setString(2, alias);
-            queryInsertContact.setString(3, ipv4);
-            queryInsertContact.setInt(4, tlsport);
+            queryInsertContact.setString(1,contact.getCid());
+            queryInsertContact.setString(2, contact.getAlias());
+            queryInsertContact.setString(3, contact.getIpv4());
+            queryInsertContact.setInt(4, contact.getTlsPort());
             queryInsertContact.executeUpdate();
 
             return true;
@@ -227,26 +232,26 @@ private void closeConnection(){
 
     /**addAccountContact
      * Add an account to the database if the username, password and salt are within test bounds
-     * @param username the accounts identifier
-     * @param pass the accounts password
-     * @param salt the salt for the password
+     * @param account an account object
+     * @param contact a contact object
      * @return return true if successful and false if failed
      */
-    public boolean addAccount(String username, String pass, String salt, String cid, String alias, String ipv4, int tlsport){
+    public boolean addAccount(Account account, Contact contact){
 
-    if(username.length() <= 256 && pass.length() <= 256 && salt.length() == 88){
+    if(account.getUsername().length() <= 256 && account.getUsername().length() > 0 && account.getKey().length() == 88 && account.getSalt().length() == 88){
      try {
          int uid = accountCounter++;
 
          // !!! ROLLBACK INSTEAD OF IF
              queryInsertAccount.setInt(1, uid);
-             queryInsertAccount.setString(2, username);
-             queryInsertAccount.setString(3, pass);
-             queryInsertAccount.setString(4, salt);
+             queryInsertAccount.setString(2, account.getUsername());
+             queryInsertAccount.setString(3, account.getKey());
+             queryInsertAccount.setString(4, account.getSalt());
+             queryInsertAccount.setInt(5, account.getIterations());
              queryInsertAccount.executeUpdate();
 
-             if(addContact(cid, alias, ipv4, tlsport)) {
-                 if(addAccountContact(uid, cid))
+             if(addContact(contact)) {
+                 if(addAccountContact(uid, contact.getCid()))
                  return true;
              }
 
@@ -286,16 +291,15 @@ private void closeConnection(){
 
     /**
      * Add a chat record to the database for the relevant account and contact
-     * @param uid the account id
-     * @param cid the contact id
+     * @param chat a chat object
      * @return true if the operation is successful and false if not
      */
-    public boolean addChat( int uid, String cid){
+    public boolean addChat(Chat chat){
 
         // COULD VALIDATE THE INPUTS HERE
         try{
-            queryInsertChat.setInt(1, uid);
-            queryInsertChat.setString(2, cid);
+            queryInsertChat.setInt(1, chat.getUid());
+            queryInsertChat.setString(2, chat.getCid());
             if(queryInsertChat.executeUpdate() > 0)
             return true;
 
@@ -335,11 +339,9 @@ private void closeConnection(){
      * @param cid the contact id
      * @param uid the account id
      * @param message the message string encrypted with the accounts public key
-     * @param dt the datetime string
-     * @param status the status enum to determine if the message was sent, recieved or pending successful transmission
      * @return true if the operation is successful and false if not
      */
-     boolean addMessage(String cid,int uid, String message, long dt, MessageStatus status){
+     boolean addMessage(Message message, int uid, String cid){
 
          // !!! WOULD BE BETTER WITH BATCH IF POSSIBLE
          // add a message size limit of 255 chars
@@ -348,9 +350,9 @@ private void closeConnection(){
             int mid = messageCounter++;
 
                 queryInsertMessage.setInt(1,mid);
-                queryInsertMessage.setString(2,message);
-                queryInsertMessage.setLong(3, dt);
-                queryInsertMessage.setInt(4,status.getCode());
+                queryInsertMessage.setString(2,message.getMessage());
+                queryInsertMessage.setLong(3, message.getDt());
+                queryInsertMessage.setInt(4,message.getStatus().getCode());
                 if(queryInsertMessage.executeUpdate() > 0) {
                     if (addChatMessages(uid, cid, mid))
                         return true;
@@ -363,17 +365,17 @@ private void closeConnection(){
 }
 
 
-    boolean addRetained(int uid, String cid, RetainedDatatype datatype){
+    boolean addSynchronize(Synchronize synchronize){
 
          try{
-             queryInsertRetain.setInt(1, uid);
-             queryInsertRetain.setString(2, cid);
-             queryInsertRetain.setInt(3, datatype.getCode());
+             queryInsertRetain.setInt(1, synchronize.getUid());
+             queryInsertRetain.setString(2, synchronize.getCid());
+             queryInsertRetain.setInt(3, synchronize.getSyncType().getCode());
              if(queryInsertRetain.executeUpdate() >0)
              return true;
 
          }catch(SQLException e){
-             System.out.println("Failed to add retained record: " + e.getMessage());
+             System.out.println("Failed to add synchronize record: " + e.getMessage());
          }
 
          return false;
@@ -381,7 +383,7 @@ private void closeConnection(){
 
 
 
-// A TEMPORARY METHOD FOR TESTING PURPOSES
+// A TEMPORARY METHOD FOR TESTING PURPf1dg13d7f8sfdOSES
 public boolean tempMethod(){
 
         try {
@@ -392,7 +394,7 @@ public boolean tempMethod(){
             statement.execute("DELETE FROM chats");
             statement.execute("DELETE FROM chatMessages");
             statement.execute("DELETE FROM messages");
-            statement.execute("DELETE FROM retained");
+            statement.execute("DELETE FROM synchronize");
 
             return true;
         }catch(SQLException e){

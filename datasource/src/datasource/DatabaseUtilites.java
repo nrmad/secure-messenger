@@ -27,7 +27,7 @@ public class DatabaseUtilites {
             "FOREIGN KEY (uid, cid) REFERENCES chats(uid,cid), FOREIGN KEY (mid) REFERENCES messages(mid))";
 
     private static final String CREATE_MESSAGES_TABLE = "CREATE TABLE IF NOT EXISTS messages(mid INTEGER PRIMARY KEY, message TEXT NOT NULL, dt INTEGER NOT NULL, status INTEGER NOT NULL)";
-    private static final String CREATE_RETAIN_TABLE = "CREATE TABLE IF NOT EXISTS synchronize(uid INTEGER, cid TEXT, datatype INTEGER NOT NULL, PRIMARY KEY(uid, cid), " +
+    private static final String CREATE_SYNCHRONIZE_TABLE = "CREATE TABLE IF NOT EXISTS synchronize(uid INTEGER, cid TEXT, datatype INTEGER NOT NULL, PRIMARY KEY(uid, cid), " +
             "FOREIGN KEY (uid) REFERENCES accounts(uid), FOREIGN KEY (cid) REFERENCES contacts(cid))";
 
     private static final String INSERT_CONTACT = "INSERT INTO contacts(cid, alias, ipv4, tlsport) VALUES(?,?,?,?)";
@@ -36,7 +36,14 @@ public class DatabaseUtilites {
     private static final String INSERT_CHAT = "INSERT INTO chats(uid, cid) VALUES(?,?)";
     private static final String INSERT_CHATMESSAGES = "INSERT INTO chatMessages(uid, cid, mid) VALUES(?,?,?)";
     private static final String INSERT_MESSAGE = "INSERT INTO messages(mid, message, dt, status) VALUES(?,?,?,?)";
-    private static final String INSERT_RETAIN = "INSERT INTO synchronize(uid, cid, datatype) VALUES(?,?,?)";
+    private static final String INSERT_SYNCHRONIZE = "INSERT INTO synchronize(uid, cid, datatype) VALUES(?,?,?)";
+
+    //-----------------------------AUTHENTICATION-----------------------------------------------------------------------
+
+    private static final String SELECT_ACCOUNT = "SELECT * FROM accounts WHERE username = ?";
+    private static final String UPDATE_ACCOUNT = "UPDATE accounts SET pass = ? AND salt = ? AND iterations = ? WHERE uid = ?";
+    private static final String SELECT_CONTACTS = "SELECT * FROM contacts c INNER JOIN accountContact ac ON c.cid = ac.cid INNER JOIN accounts a ON ac.uid = a.uid WHERE a.uid = ?";
+    //------------------------------------------------------------------------------------------------------------------
 
     private static final String RETRIEVE_MAX_UID = "SELECT COALESCE(MAX(uid), 0) FROM accounts";
     private static final String RETRIEVE_MAX_MID = "SELECT COALESCE(MAX(mid), 0) FROM messages";
@@ -50,6 +57,14 @@ public class DatabaseUtilites {
     private PreparedStatement queryInsertChatMessages;
     private PreparedStatement queryInsertMessage;
     private PreparedStatement queryInsertSynchronize;
+
+    //-----------------------------AUTHENTICATION-----------------------------------------------------------------------
+
+    private PreparedStatement querySelectAccount;
+    private PreparedStatement queryUpdateAccount;
+    private PreparedStatement querySelectContacts;
+
+    //------------------------------------------------------------------------------------------------------------------
 
     private PreparedStatement queryRetrieveMaxUid;
     private PreparedStatement queryRetrieveMaxMid;
@@ -101,7 +116,7 @@ public class DatabaseUtilites {
             statement.addBatch(CREATE_CHAT_TABLE);
             statement.addBatch(CREATE_CHATMESSAGES_TABLE);
             statement.addBatch(CREATE_MESSAGES_TABLE);
-            statement.addBatch(CREATE_RETAIN_TABLE);
+            statement.addBatch(CREATE_SYNCHRONIZE_TABLE);
 
             statement.executeBatch();
 
@@ -126,7 +141,11 @@ public class DatabaseUtilites {
             queryInsertChat = conn.prepareStatement(INSERT_CHAT);
             queryInsertChatMessages = conn.prepareStatement(INSERT_CHATMESSAGES);
             queryInsertMessage = conn.prepareStatement(INSERT_MESSAGE);
-            queryInsertSynchronize = conn.prepareStatement(INSERT_RETAIN);
+            queryInsertSynchronize = conn.prepareStatement(INSERT_SYNCHRONIZE);
+
+            querySelectAccount = conn.prepareStatement(SELECT_ACCOUNT);
+            queryUpdateAccount = conn.prepareStatement(UPDATE_ACCOUNT);
+            querySelectContacts = conn.prepareStatement(SELECT_CONTACTS);
 
             queryRetrieveMaxUid = conn.prepareStatement(RETRIEVE_MAX_UID);
             queryRetrieveMaxMid = conn.prepareStatement(RETRIEVE_MAX_MID);
@@ -174,9 +193,6 @@ public class DatabaseUtilites {
                 queryInsertAccountContact.close();
             }
             if (queryInsertChat != null) {
-                queryInsertSynchronize.close();
-            }
-            if (queryInsertChat != null) {
                 queryInsertChat.close();
             }
             if (queryInsertChatMessages != null) {
@@ -187,6 +203,15 @@ public class DatabaseUtilites {
             }
             if (queryInsertSynchronize != null) {
                 queryInsertSynchronize.close();
+            }
+            if (querySelectAccount != null) {
+                querySelectAccount.close();
+            }
+            if (queryUpdateAccount != null) {
+                queryUpdateAccount.close();
+            }
+            if (querySelectContacts != null) {
+                querySelectContacts.close();
             }
             if (queryRetrieveMaxUid != null) {
                 queryRetrieveMaxUid.close();
@@ -203,13 +228,45 @@ public class DatabaseUtilites {
 
     }
 
+    //----------------------------------AUTHENTICATION------------------------------------------------------------------
+
+    Account getAccount(String username)
+            throws SQLException {
+        querySelectAccount.setString(1, username);
+        ResultSet resultSet = querySelectAccount.executeQuery();
+        querySelectAccount.clearParameters();
+        if (resultSet.next())
+            return new Account(resultSet.getInt(1), resultSet.getString(2),
+            resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5));
+        else
+            throw new SQLException("username was not found");
+    }
+
+    boolean updateAccount(Account account) {
+
+        return true;
+    }
+
+    boolean getAccountContacts(Account account) {
+
+
+        return true;
+    }
+
+
+    //----------------------------------UPDATES-------------------------------------------------------------------------
+
+
+    //------------------------------------------------------------------------------------------------------------------
+
     boolean addContacts(List<Contact> contacts) {
         try {
             try {
                 conn.setAutoCommit(false);
 
                 for (Contact contact : contacts) {
-                    if (ipv4Pattern.matcher(contact.getIpv4()).matches() && contact.getAlias().length() <= 256 && contact.getTlsPort() >= 1024 && contact.getTlsPort() <= 65535) {
+                    if (ipv4Pattern.matcher(contact.getIpv4()).matches() && contact.getAlias().length() <= 256 &&
+                            contact.getTlsPort() >= 1024 && contact.getTlsPort() <= 65535) {
                         queryInsertContact.setString(1, contact.getCid());
                         queryInsertContact.setString(2, contact.getAlias());
                         queryInsertContact.setString(3, contact.getIpv4());
@@ -241,7 +298,8 @@ public class DatabaseUtilites {
      */
     private void addContact(Contact contact)
             throws SQLException {
-        if (ipv4Pattern.matcher(contact.getIpv4()).matches() && contact.getAlias().length() <= 256 && contact.getTlsPort() >= 1024 && contact.getTlsPort() <= 65535) {
+        if (ipv4Pattern.matcher(contact.getIpv4()).matches() && contact.getAlias().length() <= 256 &&
+                contact.getTlsPort() >= 1024 && contact.getTlsPort() <= 65535) {
             queryInsertContact.setString(1, contact.getCid());
             queryInsertContact.setString(2, contact.getAlias());
             queryInsertContact.setString(3, contact.getIpv4());
@@ -263,7 +321,8 @@ public class DatabaseUtilites {
      */
     public boolean addAccount(Account account, Contact contact) {
 
-        if (account.getUsername().length() <= 256 && account.getUsername().length() > 0 && account.getKey().length() == 88 && account.getSalt().length() == 88) {
+        if (account.getUsername().length() <= 256 && account.getUsername().length() > 0 &&
+                account.getKey().length() == 88 && account.getSalt().length() == 88) {
 
             try {
                 try {
@@ -292,7 +351,6 @@ public class DatabaseUtilites {
             } catch (SQLException e) {
             }
         }
-
         return false;
     }
 
@@ -331,14 +389,12 @@ public class DatabaseUtilites {
 
         } catch (SQLException e) {
             System.out.println("Failed to add chat: " + e.getMessage());
+            return false;
         } finally {
             try {
                 queryInsertChat.clearParameters();
-            } catch (SQLException e) {
-            }
+            } catch (SQLException e) {}
         }
-
-        return false;
     }
 
     /**
@@ -389,13 +445,12 @@ public class DatabaseUtilites {
             } catch (SQLException e) {
                 conn.rollback();
                 System.out.println("Failed to add message: " + e.getMessage());
+
             } finally {
                 queryInsertMessage.clearParameters();
                 conn.setAutoCommit(true);
             }
-        } catch (SQLException e) {
-        }
-
+        } catch (SQLException e) {}
         return false;
     }
 
@@ -411,13 +466,12 @@ public class DatabaseUtilites {
 
         } catch (SQLException e) {
             System.out.println("Failed to add synchronize record: " + e.getMessage());
+            return false;
         } finally {
             try {
                 queryInsertSynchronize.clearParameters();
-            } catch (SQLException e) {
-            }
+            } catch (SQLException e) {}
         }
-        return false;
     }
 
 
@@ -437,8 +491,8 @@ public class DatabaseUtilites {
             return true;
         } catch (SQLException e) {
             System.out.println(e.getMessage());
+            return false;
         }
-        return false;
     }
 
 }

@@ -2,6 +2,7 @@ package datasource;
 
 import java.io.File;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -230,6 +231,12 @@ public class DatabaseUtilites {
 
     //----------------------------------AUTHENTICATION------------------------------------------------------------------
 
+    /**
+     * gets the account record for use in the authentication process
+     * @param username the distinct username used to obtain the record
+     * @return the Account record
+     * @throws SQLException if the username was not found or an error occurs
+     */
     Account getAccount(String username)
             throws SQLException {
         querySelectAccount.setString(1, username);
@@ -237,20 +244,60 @@ public class DatabaseUtilites {
         querySelectAccount.clearParameters();
         if (resultSet.next())
             return new Account(resultSet.getInt(1), resultSet.getString(2),
-            resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5));
+                    resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5));
         else
             throw new SQLException("username was not found");
     }
 
+    /**
+     * updates the account record during the authentication process to the new default iteration count
+     * @param account the account to be updated
+     * @return a boolean denoting success
+     */
     boolean updateAccount(Account account) {
-
-        return true;
+        try {
+            queryUpdateAccount.setString(1, account.getKey());
+            queryUpdateAccount.setString(2, account.getSalt());
+            queryUpdateAccount.setInt(3, account.getIterations());
+            queryUpdateAccount.setInt(4, account.getUid());
+            if (queryUpdateAccount.executeUpdate() == 1)
+                return true;
+        } catch (SQLException e) {
+            System.out.println("failed to update account" + e.getMessage());
+        } finally {
+            try {
+                queryUpdateAccount.clearParameters();
+            } catch (SQLException e) {}
+        }
+        return false;
     }
 
-    boolean getAccountContacts(Account account) {
+    /**
+     * getContacts returns the contact list associated with the account
+     * @param account the account to access the accounts for
+     * @return a list of contacts matching the account
+     * @throws SQLException the exception is thrown if no accounts are matched
+     */
+    List<Contact> getContacts(Account account)
+            throws SQLException {
 
+        List<Contact> contacts = new ArrayList<>();
+        Contact contact;
 
-        return true;
+        querySelectContacts.setInt(1, account.getUid());
+        ResultSet resultSet = querySelectContacts.executeQuery();
+        querySelectContacts.clearParameters();
+        while (resultSet.next()) {
+            contact = new Contact(resultSet.getString(1), resultSet.getString(2),
+            resultSet.getString(3), resultSet.getInt(4));
+            if (ipv4Pattern.matcher(contact.getIpv4()).matches() && contact.getAlias().length() <= 256 &&
+                contact.getTlsPort() >= 1024 && contact.getTlsPort() <= 65535)
+                contacts.add(contact);
+        }
+        if(contacts.size() > 0)
+            return contacts;
+        else
+            throw new SQLException("no contacts mached the account");
     }
 
 
@@ -305,7 +352,6 @@ public class DatabaseUtilites {
             queryInsertContact.setString(3, contact.getIpv4());
             queryInsertContact.setInt(4, contact.getTlsPort());
             queryInsertContact.executeUpdate();
-            queryInsertContact.clearParameters();
         } else {
             throw new SQLException();
         }
@@ -335,7 +381,6 @@ public class DatabaseUtilites {
                     queryInsertAccount.setString(4, account.getSalt());
                     queryInsertAccount.setInt(5, account.getIterations());
                     queryInsertAccount.executeUpdate();
-                    queryInsertAccount.clearParameters();
                     addContact(contact);
                     addAccountContact(uid, contact.getCid());
                     conn.commit();
@@ -347,6 +392,7 @@ public class DatabaseUtilites {
                 } finally {
                     conn.setAutoCommit(true);
                     queryInsertAccount.clearParameters();
+                    queryInsertContact.clearParameters();
                 }
             } catch (SQLException e) {
             }
@@ -393,7 +439,8 @@ public class DatabaseUtilites {
         } finally {
             try {
                 queryInsertChat.clearParameters();
-            } catch (SQLException e) {}
+            } catch (SQLException e) {
+            }
         }
     }
 
@@ -450,7 +497,8 @@ public class DatabaseUtilites {
                 queryInsertMessage.clearParameters();
                 conn.setAutoCommit(true);
             }
-        } catch (SQLException e) {}
+        } catch (SQLException e) {
+        }
         return false;
     }
 
@@ -470,7 +518,8 @@ public class DatabaseUtilites {
         } finally {
             try {
                 queryInsertSynchronize.clearParameters();
-            } catch (SQLException e) {}
+            } catch (SQLException e) {
+            }
         }
     }
 

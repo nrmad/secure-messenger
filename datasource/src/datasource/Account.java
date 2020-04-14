@@ -27,6 +27,10 @@ public class Account {
         this.iterations = iterations;
     }
 
+    public int getUid() {
+        return uid;
+    }
+
     public String getUsername() {
         return username;
     }

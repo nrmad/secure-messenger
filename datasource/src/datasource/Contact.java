@@ -29,4 +29,18 @@ public class Contact {
     public int getTlsPort() {
         return tlsPort;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if( this == obj)
+            return true;
+        if(obj == null || getClass() != obj.getClass()){
+            return false;
+        }
+        Contact contact = (Contact) obj;
+        return cid.equals(contact.getCid()) &&
+                alias.equals(contact.getAlias()) &&
+                ipv4.equals(contact.getIpv4()) &&
+                tlsPort == contact.getTlsPort();
+    }
 }

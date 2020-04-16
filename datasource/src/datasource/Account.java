@@ -46,4 +46,19 @@ public class Account {
     public int getIterations() {
         return iterations;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if( this == obj)
+            return true;
+        if(obj == null || getClass() != obj.getClass()){
+            return false;
+        }
+        Account account = (Account) obj;
+        return uid == account.getUid() &&
+                username.equals(account.getUsername()) &&
+                key.equals(account.getKey()) &&
+                salt.equals(account.getSalt()) &&
+                iterations == account.getIterations();
+    }
 }

@@ -1,12 +1,14 @@
 package datasource;
 
 import org.junit.After;
+import org.junit.Test;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.sql.SQLException;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -30,38 +32,141 @@ public class DatabaseUtilitiesTest {
     }
 
     @org.junit.Test
+    public void getAccount(){
+
+        try {
+            byte[] salt = getSalt(), hashWithSalt = getKey(salt, "password");
+            String stringSalt = Base64.getEncoder().encodeToString(salt);
+            String tempHash = Base64.getEncoder().encodeToString(hashWithSalt);
+
+            Account account = new Account("james", tempHash, stringSalt, 100000);
+            Contact contact = new Contact("abc", "accountboi", "127.0.0.1", 1025);
+            databaseUtilities.addAccount(account, contact);
+
+            account = new Account(5, account.getUsername(), account.getKey(), account.getSalt(), account.getIterations());
+            Account account1 = databaseUtilities.getAccount(account.getUsername());
+//            System.out.println(account.getUid()+ account.getUsername() + account.getKey() + account.getSalt() + account.getIterations());
+//            System.out.println(account1.getUid()+ account1.getUsername() + account1.getKey() + account1.getSalt() + account1.getIterations());
+
+
+            assertEquals(account, databaseUtilities.getAccount(account.getUsername()));
+            assertNotEquals(account, databaseUtilities.getAccount("jack"));
+
+        }catch(NoSuchAlgorithmException |InvalidKeySpecException | SQLException e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+    @org.junit.Test
+    public void updateAccount(){
+        try {
+            byte[] salt = getSalt(), hashWithSalt = getKey(salt, "password");
+            String stringSalt = Base64.getEncoder().encodeToString(salt);
+            String tempHash = Base64.getEncoder().encodeToString(hashWithSalt);
+
+            Account account = new Account("james", tempHash, stringSalt, 100000);
+            Contact contact = new Contact("abc", "accountboi", "127.0.0.1", 1025);
+            databaseUtilities.addAccount(account, contact);
+
+            account = databaseUtilities.getAccount(account.getUsername());
+            salt = getSalt();
+            hashWithSalt = getKey(salt, "password", 150000);
+            stringSalt = Base64.getEncoder().encodeToString(salt);
+            tempHash = Base64.getEncoder().encodeToString(hashWithSalt);
+
+            assertTrue(databaseUtilities.updateAccount(new Account(account.getUid(), account.getUsername(), tempHash, stringSalt, 150000)));
+
+        }catch(NoSuchAlgorithmException |InvalidKeySpecException | SQLException e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+    @org.junit.Test
+    public void getContacts(){
+        List<Contact> contacts = new ArrayList<>();
+
+        try {
+            byte[] salt = getSalt(), hashWithSalt = getKey(salt, "password");
+            String stringSalt = Base64.getEncoder().encodeToString(salt);
+            String tempHash = Base64.getEncoder().encodeToString(hashWithSalt);
+
+            Account account = new Account("james", tempHash, stringSalt, 100000);
+            Contact contact = new Contact("abc", "accountboi", "127.0.0.1", 1025);
+            databaseUtilities.addAccount(account, contact);
+
+            try {
+                account = databaseUtilities.getAccount(account.getUsername());
+            }catch (SQLException e){}
+
+            contacts.add(new Contact("a1", "nrmad", "127.0.0.1", 1025));
+            contacts.add(new Contact("a2", "nrmad", "127.0.0.1", 1025));
+            contacts.add(new Contact("a3", "nrmad", "127.0.0.1", 1025));
+
+            databaseUtilities.addContacts(contacts, account);
+
+            contacts.add(contact);
+
+            assertEquals(contacts, databaseUtilities.getContacts(account));
+
+        }catch(NoSuchAlgorithmException |InvalidKeySpecException | SQLException e){
+            System.out.println(e.getMessage());
+        }
+
+        }
+
+    // MUST CHECK WITH BOGUS INPUT
+    @org.junit.Test
     public void addContacts() {
 
         List<Contact> contacts = new ArrayList<>();
 
-        contacts.add(new Contact("f1dg13d7f8sfd", "nrmad", "127.0.0.1", 1025));
-        assertTrue(databaseUtilities.addContacts(contacts));
+        try {
+            byte[] salt = getSalt(), hashWithSalt = getKey(salt, "password");
+            String stringSalt = Base64.getEncoder().encodeToString(salt);
+            String tempHash = Base64.getEncoder().encodeToString(hashWithSalt);
+
+            Account account = new Account("james", tempHash, stringSalt, 100000);
+            Contact contact = new Contact("abc", "accountboi", "127.0.0.1", 1025);
+            databaseUtilities.addAccount(account, contact);
+
+            try {
+                account = databaseUtilities.getAccount(account.getUsername());
+            }catch (SQLException e){}
+
+            contacts.add(new Contact("f1dg13d7f8sfd", "nrmad", "127.0.0.1", 1025));
+        assertTrue(databaseUtilities.addContacts(contacts, account));
 
         contacts.clear();
         contacts.add(new Contact("f1dg13d7f8sfd", "nrmad", "127.0.0.1", 1025));
-        assertFalse(databaseUtilities.addContacts(contacts));
+        assertFalse(databaseUtilities.addContacts(contacts, account));
 
         contacts.clear();
         contacts.add(new Contact("f1dg13d7f8sfd1", "nrmad", "1234-0-0-1", 1025));
-        assertFalse(databaseUtilities.addContacts(contacts));
+        assertFalse(databaseUtilities.addContacts(contacts, account));
 
         contacts.clear();
         contacts.add(new Contact("f1dg13d7f8sfd2", "nrmad", "127-a-a-a", 1));
-        assertFalse(databaseUtilities.addContacts(contacts));
+        assertFalse(databaseUtilities.addContacts(contacts, account));
 
         contacts.clear();
         contacts.add(new Contact("f1dg13d7f8sfd3", "nrmad", "127.0.0.0", 65536));
-        assertFalse(databaseUtilities.addContacts(contacts));
+        assertFalse(databaseUtilities.addContacts(contacts, account));
 
         contacts.clear();
         contacts.add( new Contact("f1dg13d7f8sfd4", "nrmad", "127-a-a-a", -1));
-        assertFalse(databaseUtilities.addContacts(contacts));
+        assertFalse(databaseUtilities.addContacts(contacts, account));
 
         contacts.clear();
         contacts.add(new Contact("a1", "nrmad", "127.0.0.1", 1025));
         contacts.add(new Contact("a2", "nrmad", "127.0.0.1", 1025));
         contacts.add(new Contact("a3", "nrmad", "127.0.0.1", 1025));
 
+        assertTrue(databaseUtilities.addContacts(contacts, account));
+
+
+        }catch(NoSuchAlgorithmException |InvalidKeySpecException e){
+            System.out.println(e.getMessage());
+        }
     }
 
     @org.junit.Test
@@ -102,9 +207,14 @@ public class DatabaseUtilitiesTest {
             Account account = new Account("james", tempHash, stringSalt, 100000);
             Contact contact = new Contact("abc", "accountboi", "127.0.0.1", 1025);
             databaseUtilities.addAccount(account, contact);
+
+            try {
+                account = databaseUtilities.getAccount(account.getUsername());
+            }catch (SQLException e){}
+
             contacts.add(new Contact("abd", "nrmad", "127.0.0.1", 1025));
-            databaseUtilities.addContacts(contacts);
-            Chat chat = new Chat(1,"abd");
+            databaseUtilities.addContacts(contacts, account);
+            Chat chat = new Chat(account.getUid(),"abd");
             assertTrue(databaseUtilities.addChat(chat));
 
         // ??? ADD A FALSE
@@ -114,7 +224,7 @@ public class DatabaseUtilitiesTest {
     }
 
 
-    @org.junit.Test
+    @Test
     public void addMessage() {
 
         try {
@@ -129,16 +239,18 @@ public class DatabaseUtilitiesTest {
             databaseUtilities.addAccount(account, contact);
             contact = new Contact("abd", "nrmad", "127.0.0.1", 1025);
             contacts.add(contact);
-            databaseUtilities.addContacts(contacts);
+            databaseUtilities.addContacts(contacts, account);
             Chat chat = new Chat(1,"abd");
             databaseUtilities.addChat(chat);
 
+            account = new Account(1,"james", tempHash, stringSalt, 100000);
+
             Message message = new Message( "sdoijfsdoi", System.currentTimeMillis(), MessageStatus.PENDING);
-            assertTrue(databaseUtilities.addMessage(message, 1, "abd"));
+            assertTrue(databaseUtilities.addMessage(message, account, contact));
             message = new Message( "sdoijfsdoi", System.currentTimeMillis(), MessageStatus.SENT);
-            assertTrue(databaseUtilities.addMessage(message, 1, "abd"));
+            assertTrue(databaseUtilities.addMessage(message, account, contact));
             message = new Message("sdoijfsdoi", System.currentTimeMillis(), MessageStatus.RECIEVED);
-            assertTrue(databaseUtilities.addMessage(message, 1, "abd"));
+            assertTrue(databaseUtilities.addMessage(message, account, contact));
 
         }catch(NoSuchAlgorithmException |InvalidKeySpecException e){
             System.out.println(e.getMessage());
@@ -162,13 +274,13 @@ public class DatabaseUtilitiesTest {
             Contact contact = new Contact("abc", "accountboi", "127.0.0.1", 1025);
             databaseUtilities.addAccount(account, contact);
             contacts.add(new Contact("a","boi1","127.0.0.1",1025));
-            databaseUtilities.addContacts(contacts);
+            databaseUtilities.addContacts(contacts, account);
             contacts.clear();
             contacts.add(new Contact("b","boi2","127.0.0.1",1025));
-            databaseUtilities.addContacts(contacts);
+            databaseUtilities.addContacts(contacts, account);
             contacts.remove(0);
             contacts.add( new Contact("c","boi3","127.0.0.1",1025));
-            databaseUtilities.addContacts(contacts);
+            databaseUtilities.addContacts(contacts, account);
 
             Synchronize synchronize = new Synchronize(1,"a", SyncType.CONTACT);
             assertTrue(databaseUtilities.addSynchronize(synchronize));
@@ -190,10 +302,15 @@ public class DatabaseUtilitiesTest {
         return salt;
     }
 
-    private byte[] getKey(byte[] salt, String password)
-    throws NoSuchAlgorithmException, InvalidKeySpecException {
 
-        PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 100000, 512);
+    private byte[] getKey(byte[] salt, String password)
+            throws NoSuchAlgorithmException, InvalidKeySpecException{
+        return getKey(salt, password, 100000);
+    }
+    private byte[] getKey(byte[] salt, String password, int iterations)
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+        PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, 512);
         SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
         return secretKeyFactory.generateSecret(spec).getEncoded();
     }

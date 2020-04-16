@@ -18,7 +18,7 @@ public class DatabaseUtilites {
     public String CONNECTION_STRING = "jdbc:sqlite:" + "resources" + File.separator + DB_NAME;
 
     private static final String CREATE_CONTACTS_TABLE = "CREATE TABLE IF NOT EXISTS contacts(cid TEXT PRIMARY KEY, alias TEXT NOT NULL, ipv4 TEXT NOT NULL, tlsport INTEGER NOT NULL)";
-    private static final String CREATE_ACCOUNTS_TABLE = "CREATE TABLE IF NOT EXISTS accounts(uid INTEGER PRIMARY KEY, username TEXT NOT NULL, pass TEXT NOT NULL, salt TEXT NOT NULL)";
+    private static final String CREATE_ACCOUNTS_TABLE = "CREATE TABLE IF NOT EXISTS accounts(uid INTEGER PRIMARY KEY, username TEXT NOT NULL, pass TEXT NOT NULL, salt TEXT NOT NULL, iterations INTEGER NOT NULL)";
     private static final String CREATE_ACCOUNTCONTACT_TABLE = "CREATE TABLE IF NOT EXISTS accountContact( uid INTEGER, cid TEXT, PRIMARY KEY(uid, cid), FOREIGN KEY (uid) REFERENCES accounts(uid)," +
             "FOREIGN KEY (cid) REFERENCES contacts(cid))";
 
@@ -239,9 +239,9 @@ public class DatabaseUtilites {
      */
     Account getAccount(String username)
             throws SQLException {
+        querySelectAccount.clearParameters();
         querySelectAccount.setString(1, username);
         ResultSet resultSet = querySelectAccount.executeQuery();
-        querySelectAccount.clearParameters();
         if (resultSet.next())
             return new Account(resultSet.getInt(1), resultSet.getString(2),
                     resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5));
@@ -256,6 +256,7 @@ public class DatabaseUtilites {
      */
     boolean updateAccount(Account account) {
         try {
+            queryUpdateAccount.clearParameters();
             queryUpdateAccount.setString(1, account.getKey());
             queryUpdateAccount.setString(2, account.getSalt());
             queryUpdateAccount.setInt(3, account.getIterations());
@@ -264,12 +265,9 @@ public class DatabaseUtilites {
                 return true;
         } catch (SQLException e) {
             System.out.println("failed to update account" + e.getMessage());
-        } finally {
-            try {
-                queryUpdateAccount.clearParameters();
-            } catch (SQLException e) {}
         }
-        return false;
+
+            return false;
     }
 
     /**
@@ -284,9 +282,9 @@ public class DatabaseUtilites {
         List<Contact> contacts = new ArrayList<>();
         Contact contact;
 
+        querySelectContacts.clearParameters();
         querySelectContacts.setInt(1, account.getUid());
         ResultSet resultSet = querySelectContacts.executeQuery();
-        querySelectContacts.clearParameters();
         while (resultSet.next()) {
             contact = new Contact(resultSet.getString(1), resultSet.getString(2),
             resultSet.getString(3), resultSet.getInt(4));
@@ -297,7 +295,7 @@ public class DatabaseUtilites {
         if(contacts.size() > 0)
             return contacts;
         else
-            throw new SQLException("no contacts mached the account");
+            throw new SQLException("no contacts matched the account");
     }
 
 
@@ -306,10 +304,14 @@ public class DatabaseUtilites {
 
     //------------------------------------------------------------------------------------------------------------------
 
-    boolean addContacts(List<Contact> contacts) {
+    boolean addContacts(List<Contact> contacts, Account account) {
         try {
             try {
                 conn.setAutoCommit(false);
+
+                queryInsertContact.clearBatch();
+                queryInsertAccountContact.clearBatch();
+
 
                 for (Contact contact : contacts) {
                     if (ipv4Pattern.matcher(contact.getIpv4()).matches() && contact.getAlias().length() <= 256 &&
@@ -319,23 +321,31 @@ public class DatabaseUtilites {
                         queryInsertContact.setString(3, contact.getIpv4());
                         queryInsertContact.setInt(4, contact.getTlsPort());
                         queryInsertContact.addBatch();
+
+                        queryInsertAccountContact.setInt(1, account.getUid());
+                        queryInsertAccountContact.setString(2, contact.getCid());
+                        queryInsertAccountContact.addBatch();
                     } else {
                         throw new SQLException("Format incorrect");
                     }
                 }
+
                 queryInsertContact.executeBatch();
+                queryInsertAccountContact.executeBatch();
+
                 conn.commit();
                 return true;
 
             } catch (SQLException e) {
-                conn.rollback();
+
                 System.out.println("failed to add contacts: " + e.getMessage());
+                conn.rollback();
             } finally {
-                queryInsertContact.clearParameters();
                 conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
         }
+
         return false;
     }
 
@@ -347,6 +357,7 @@ public class DatabaseUtilites {
             throws SQLException {
         if (ipv4Pattern.matcher(contact.getIpv4()).matches() && contact.getAlias().length() <= 256 &&
                 contact.getTlsPort() >= 1024 && contact.getTlsPort() <= 65535) {
+            queryInsertContact.clearParameters();
             queryInsertContact.setString(1, contact.getCid());
             queryInsertContact.setString(2, contact.getAlias());
             queryInsertContact.setString(3, contact.getIpv4());
@@ -375,6 +386,8 @@ public class DatabaseUtilites {
                     int uid = accountCounter++;
                     conn.setAutoCommit(false);
 
+                    queryInsertAccount.clearParameters();
+                    queryInsertContact.clearParameters();
                     queryInsertAccount.setInt(1, uid);
                     queryInsertAccount.setString(2, account.getUsername());
                     queryInsertAccount.setString(3, account.getKey());
@@ -391,11 +404,8 @@ public class DatabaseUtilites {
                     System.out.println("Failed to add account: " + e.getMessage());
                 } finally {
                     conn.setAutoCommit(true);
-                    queryInsertAccount.clearParameters();
-                    queryInsertContact.clearParameters();
                 }
-            } catch (SQLException e) {
-            }
+            } catch (SQLException e) {}
         }
         return false;
     }
@@ -411,10 +421,10 @@ public class DatabaseUtilites {
      */
     private void addAccountContact(int uid, String cid)
             throws SQLException {
+        queryInsertAccountContact.clearParameters();
         queryInsertAccountContact.setInt(1, uid);
         queryInsertAccountContact.setString(2, cid);
         queryInsertAccountContact.executeUpdate();
-        queryInsertAccountContact.clearParameters();
     }
 
 
@@ -428,6 +438,7 @@ public class DatabaseUtilites {
 
         // COULD VALIDATE THE INPUTS HERE
         try {
+            queryInsertChat.clearParameters();
             queryInsertChat.setInt(1, chat.getUid());
             queryInsertChat.setString(2, chat.getCid());
             queryInsertChat.executeUpdate();
@@ -436,11 +447,6 @@ public class DatabaseUtilites {
         } catch (SQLException e) {
             System.out.println("Failed to add chat: " + e.getMessage());
             return false;
-        } finally {
-            try {
-                queryInsertChat.clearParameters();
-            } catch (SQLException e) {
-            }
         }
     }
 
@@ -454,24 +460,23 @@ public class DatabaseUtilites {
      */
     private void addChatMessages(int uid, String cid, int mid)
             throws SQLException {
+        queryInsertChatMessages.clearParameters();
         queryInsertChatMessages.setInt(1, uid);
         queryInsertChatMessages.setString(2, cid);
         queryInsertChatMessages.setInt(3, mid);
         queryInsertChatMessages.executeUpdate();
-        queryInsertChatMessages.clearParameters();
-
     }
 
 
     /**
      * Add a message record to the database
      *
-     * @param cid     the contact id
-     * @param uid     the account id
+     * @param contact     the contact
+     * @param account     the account
      * @param message the message string encrypted with the accounts public key
      * @return true if the operation is successful and false if not
      */
-    boolean addMessage(Message message, int uid, String cid) {
+    boolean addMessage(Message message, Account account, Contact contact) {
 
         // !!! WOULD BE BETTER WITH BATCH IF POSSIBLE
         // add a message size limit of 255 chars
@@ -479,13 +484,13 @@ public class DatabaseUtilites {
             try {
                 int mid = messageCounter++;
                 conn.setAutoCommit(false);
-
+                queryInsertMessage.clearParameters();
                 queryInsertMessage.setInt(1, mid);
                 queryInsertMessage.setString(2, message.getMessage());
                 queryInsertMessage.setLong(3, message.getDt());
                 queryInsertMessage.setInt(4, message.getStatus().getCode());
                 queryInsertMessage.executeUpdate();
-                addChatMessages(uid, cid, mid);
+                addChatMessages(account.getUid(), contact.getCid(), mid);
                 conn.commit();
                 return true;
 
@@ -494,11 +499,9 @@ public class DatabaseUtilites {
                 System.out.println("Failed to add message: " + e.getMessage());
 
             } finally {
-                queryInsertMessage.clearParameters();
                 conn.setAutoCommit(true);
             }
-        } catch (SQLException e) {
-        }
+        } catch (SQLException e) {}
         return false;
     }
 
@@ -506,6 +509,7 @@ public class DatabaseUtilites {
     boolean addSynchronize(Synchronize synchronize) {
 
         try {
+            queryInsertSynchronize.clearParameters();
             queryInsertSynchronize.setInt(1, synchronize.getUid());
             queryInsertSynchronize.setString(2, synchronize.getCid());
             queryInsertSynchronize.setInt(3, synchronize.getSyncType().getCode());
@@ -515,11 +519,6 @@ public class DatabaseUtilites {
         } catch (SQLException e) {
             System.out.println("Failed to add synchronize record: " + e.getMessage());
             return false;
-        } finally {
-            try {
-                queryInsertSynchronize.clearParameters();
-            } catch (SQLException e) {
-            }
         }
     }
 

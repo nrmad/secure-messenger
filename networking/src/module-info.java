@@ -1,3 +1,2 @@
 module networking {
-    exports networking;
 }

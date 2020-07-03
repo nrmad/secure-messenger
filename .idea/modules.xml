@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/common/common.iml" filepath="$PROJECT_DIR$/common/common.iml" />
       <module fileurl="file://$PROJECT_DIR$/datasource/datasource.iml" filepath="$PROJECT_DIR$/datasource/datasource.iml" />
       <module fileurl="file://$PROJECT_DIR$/networking/networking.iml" filepath="$PROJECT_DIR$/networking/networking.iml" />
       <module fileurl="file://$PROJECT_DIR$/secure-messenger.iml" filepath="$PROJECT_DIR$/secure-messenger.iml" />

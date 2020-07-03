@@ -11,14 +11,14 @@
 <GridPane alignment="CENTER" hgap="10" prefHeight="400.0" prefWidth="600.0" vgap="10" xmlns="http://javafx.com/javafx/8.0.172-ea"
           xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.RegisterController">
 
-            <!--<Label text="Enter username: " GridPane.columnIndex="0" GridPane.rowIndex="0" />-->
             <TextField fx:id="username" GridPane.columnIndex="0" GridPane.rowIndex="0" prefHeight="26.0" prefWidth="212.0" promptText="username"/>
-            <!--<Label text="Enter password: " GridPane.columnIndex="0" GridPane.rowIndex="1" />-->
             <PasswordField fx:id="password" GridPane.columnIndex="0" GridPane.rowIndex="1" promptText="password"/>
-            <!--<Label text="Confirm Password:" GridPane.columnIndex="0" GridPane.rowIndex="2" />-->
             <PasswordField fx:id="confirmedPass" GridPane.columnIndex="0" GridPane.rowIndex="2" promptText="confirm password"/>
-            <TextField fx:id="ipTextField" GridPane.columnIndex="0" GridPane.rowIndex="3" promptText="node ipv4 address"/>
-            <TextField fx:id="portTextField" GridPane.columnIndex="0" GridPane.rowIndex="4" promptText="node port number"/>
-            <Button fx:id="createAccountBtn" prefHeight="26.0" prefWidth="212.0" text="Confirm" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+            <TextField fx:id="alias" GridPane.columnIndex="0" GridPane.rowIndex="3" promptText="alias"/>
+            <TextField fx:id="ipTextField" GridPane.columnIndex="0" GridPane.rowIndex="4" promptText="node ipv4 address"/>
+            <TextField fx:id="portTextField" GridPane.columnIndex="0" GridPane.rowIndex="5" promptText="node port number"/>
+            <TextField fx:id="trustText" editable="false" GridPane.columnIndex="0" GridPane.rowIndex="6" promptText="select truststore"/>
+            <Button fx:id="trustSelector" GridPane.halignment="RIGHT"  text="browse" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+            <Button fx:id="createAccountBtn" prefHeight="26.0" prefWidth="212.0" text="Confirm" GridPane.columnIndex="0" GridPane.rowIndex="7" />
 
 </GridPane>

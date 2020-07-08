@@ -11,11 +11,12 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
 
-        //DatabaseUtilites databaseUtilites = DatabaseUtilites.getInstance();
-        Parent root = FXMLLoader.load(getClass().getResource("/ui/startup.fxml"));
+        Parent dashBoard = FXMLLoader.load(getClass().getResource("/ui/dashboard.fxml"));
+        Parent loginRegister = FXMLLoader.load(getClass().getResource("/ui/startup.fxml"));
+        LoginController.setDashboard(dashBoard);
+        DashboardController.setLoginRegister(loginRegister);
         primaryStage.setTitle("Secure Messenger");
-        primaryStage.setScene(new Scene(root, 800, 400));
-        //primaryStage.setMaximized(true);ha,is
+        primaryStage.setScene(new Scene(loginRegister, 800, 400));
         primaryStage.show();
     }
 

@@ -15,6 +15,6 @@
     <!--<Label text="Password: " GridPane.columnIndex="0" GridPane.rowIndex="1" />-->
     <PasswordField fx:id="password" GridPane.columnIndex="0" GridPane.rowIndex="1" promptText="password"/>
 
-    <Button prefHeight="26.0" prefWidth="212.0" text="Login" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+    <Button fx:id="loginBtn" onMouseClicked="#loginHandler" prefHeight="26.0" prefWidth="212.0" text="Login" GridPane.columnIndex="0" GridPane.rowIndex="2" />
 
 </GridPane>

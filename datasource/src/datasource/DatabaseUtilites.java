@@ -20,9 +20,8 @@ public class DatabaseUtilites {
     private static final String CREATE_ACCOUNT_CONTACT = "CREATE TABLE IF NOT EXISTS accountContact(aid INTEGER, " +
             "cid INTEGER, PRIMARY KEY(aid,cid), FOREIGN KEY(aid) REFERENCES accounts(aid) ON DELETE CASCADE, " +
             "FOREIGN KEY(cid) REFERENCES contacts(cid) ON DELETE CASCADE)";
-    private static final String CREATE_ACCOUNTS = "CREATE TABLE IF NOT EXISTS accounts(aid INTEGER PRIMARY KEY, " +
-            "username VARCHAR(255) UNIQUE NOT NULL, password TEXT, salt CHAR(88) NOT NULL, iterations INTEGER NOT NULL)";
-    private static final String CREATE_CONTACTS = "CREATE TABLE IF NOT EXISTS contacts(cid INTEGER PRIMARY KEY, " +
+    private static final String CREATE_ACCOUNTS = "CREATE TABLE IF NOT EXISTS accounts(aid INTEGER, said INTEGER PRIMARY KEY)";
+    private static final String CREATE_CONTACTS = "CREATE TABLE IF NOT EXISTS contacts(cid INTEGER, scid INTEGER PRIMARY KEY, " +
             "alias VARCHAR(255) NOT NULL)";
     private static final String CREATE_PORTS = "CREATE TABLE IF NOT EXISTS ports(pid INTEGER PRIMARY KEY, " +
             "port INTEGER UNIQUE NOT NULL)";
@@ -44,20 +43,21 @@ public class DatabaseUtilites {
             "FOREIGN KEY(nid) REFERENCES networks(nid) ON DELETE CASCADE)";
 
     private static final String SELECT_USERNAMES = "SELECT username FROM accounts";
-    private static final String INSERT_ACCOUNT = "INSERT INTO accounts(aid, username, password, salt, iterations) " +
-            "VALUES (?,?,?,?,?)";
+    private static final String INSERT_ACCOUNT = "INSERT INTO accounts(aid) VALUES (?)";
     private static final String INSERT_CONTACT = "INSERT INTO contacts(cid, alias) VALUES(?,?)";
+    private static final String INSERT_NETWORK = "INSERT IGNORE INTO networks(nid, network_alias) VALUES (?,?)";
     private static final String INSERT_ACCOUNT_CONTACT = "INSERT INTO accountContact(aid, cid) VALUES (?,?)";
     private static final String INSERT_NETWORK_CONTACTS = "INSERT INTO networkContacts(nid, cid) VALUES (?,?)";
     private static final String INSERT_ACCOUNT_NETWORK = "INSERT INTO accountNetwork(aid, nid) VALUES (?,?)";
     private static final String DELETE_ACCOUNT = "DELETE accounts FROM accounts INNER JOIN accountContact ac ON " +
             "accounts.aid = ac.aid WHERE ac.cid = ?";
     private static final String DELETE_CONTACT = "DELETE FROM contacts WHERE cid = ?";
-    private static final String SELECT_ACCOUNT = "SELECT * FROM accounts WHERE username = ? ";
     private static final String SELECT_CONTACT = "SELECT c.cid FROM contacts c INNER JOIN accountContact ac ON c.cid = ac.cid " +
             "INNER JOIN accounts a ON ac.aid = a.aid WHERE a.username = ?";
-    private static final String UPDATE_ACCOUNT_CREDENTIALS = "UPDATE accounts SET password = ?, salt = ?, iterations = ?" +
-            " WHERE aid = ?";
+
+    // !!! UPDATES: requires doubles on ids so different servers can be used where duplicates occur.
+    // account username needed otherwise don't know which network to connect to
+
 
 //private static final String CREATE_CHAT_TABLE = "CREATE TABLE IF NOT EXISTS chats(uid INTEGER, cid TEXT, PRIMARY KEY(uid,cid), FOREIGN KEY (uid) REFERENCES accounts(uid), " +
 //                                                            "FOREIGN KEY (cid) REFERENCES contacts(cid))";
@@ -83,14 +83,13 @@ public class DatabaseUtilites {
     private PreparedStatement querySelectUsernames;
     private PreparedStatement queryInsertAccount;
     private PreparedStatement queryInsertContact;
+    private PreparedStatement queryInsertNetwork;
     private PreparedStatement queryInsertAccountContact;
     private PreparedStatement queryDeleteContact;
     private PreparedStatement queryInsertNetworkContacts;
     private PreparedStatement queryInsertAccountNetwork;
     private PreparedStatement queryDeleteAccount;
-    private PreparedStatement querySelectAccount;
     private PreparedStatement querySelectContact;
-    private PreparedStatement queryUpdateAccountCredentials;
 //private PreparedStatement queryInsertChat;
 //private PreparedStatement queryInsertChatMessages;
 //private PreparedStatement queryInsertMessage;
@@ -165,14 +164,13 @@ public class DatabaseUtilites {
             querySelectUsernames = conn.prepareStatement(SELECT_USERNAMES);
             queryInsertAccount = conn.prepareStatement(INSERT_ACCOUNT);
             queryInsertContact = conn.prepareStatement(INSERT_CONTACT);
+            queryInsertNetwork = conn.prepareStatement(INSERT_NETWORK);
             queryInsertAccountContact = conn.prepareStatement(INSERT_ACCOUNT_CONTACT);
             queryDeleteContact = conn.prepareStatement(DELETE_CONTACT);
             queryInsertNetworkContacts = conn.prepareStatement(INSERT_NETWORK_CONTACTS);
             queryInsertAccountNetwork = conn.prepareStatement(INSERT_ACCOUNT_NETWORK);
             queryDeleteAccount = conn.prepareStatement(DELETE_ACCOUNT);
-            querySelectAccount = conn.prepareStatement(SELECT_ACCOUNT);
             querySelectContact = conn.prepareStatement(SELECT_CONTACT);
-            queryUpdateAccountCredentials = conn.prepareStatement(UPDATE_ACCOUNT_CREDENTIALS);
 
 //        queryInsertChat = conn.prepareStatement(INSERT_CHAT);
 //        queryInsertChatMessages = conn.prepareStatement(INSERT_CHATMESSAGES);
@@ -226,6 +224,9 @@ public class DatabaseUtilites {
             if (queryInsertContact != null) {
                 queryInsertContact.close();
             }
+            if(queryInsertNetwork != null){
+                queryInsertNetwork.close();
+            }
             if (queryInsertAccountContact != null) {
                 queryInsertAccountContact.close();
             }
@@ -241,15 +242,10 @@ public class DatabaseUtilites {
             if (queryDeleteAccount != null) {
                 queryDeleteAccount.close();
             }
-            if (querySelectAccount != null) {
-                querySelectAccount.close();
-            }
             if (querySelectContact != null) {
                 querySelectContact.close();
             }
-            if (queryUpdateAccountCredentials != null) {
-                queryUpdateAccountCredentials.close();
-            }
+
 //        if(queryInsertChat != null){
 //            queryInsertChat.close();
 //        }
@@ -285,32 +281,33 @@ public class DatabaseUtilites {
     IF ON THIS SIDE CONTACTS ARE CONNECTED TO NETWORKS AND ACCOUNTS ARE CONNECTED TO NETWORKS
     THEN ACCOUNTS NEED ONLY BE CONNECTED DIRECTLY TO THE CONTACT WHICH THEY PERTAIN TO THE REST
     CAN BE LOADED THROUGH THOSE CONNECTED TO THE ACCOUNTS NETWORK
+
+    AUTHENTICATION ONLY BEING DONE SERVER SIDE NOW SO AID IS ALL CLIENTSIDE HAS ON ACCOUNT
+    
+    MISSING NET FIELD AND PATRON CID
+
+
      */
-    public Account getAccount(Account account) throws SQLException {
-        querySelectAccount.clearParameters();
-        querySelectAccount.setString(1, account.getUsername());
-        ResultSet resultSet = querySelectAccount.executeQuery();
-        if (resultSet.next())
-            return new Account(resultSet.getInt(1), resultSet.getString(2),
-                    resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5));
-        else
-            throw new SQLException("Account not found");
+
+    public void addNetwork(Network network)throws SQLException{
+        queryInsertNetwork.clearParameters();
+        queryInsertNetwork.setInt(1, network.getNid());
+        queryInsertNetwork.setString(2, network.getNetworkAlias());
+        queryInsertAccount.executeUpdate();
     }
 
+//    public Account getAccount(Account account) throws SQLException {
+//        querySelectAccount.clearParameters();
+//        querySelectAccount.setString(1, account.getUsername());
+//        ResultSet resultSet = querySelectAccount.executeQuery();
+//        if (resultSet.next())
+//            return new Account(resultSet.getInt(1), resultSet.getString(2),
+//                    resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5));
+//        else
+//            throw new SQLException("Account not found");
+//    }
 
-    public boolean updateAccountCredentials(Account account) {
-        try {
-            queryUpdateAccountCredentials.clearParameters();
-            queryUpdateAccountCredentials.setString(1, account.getPassword());
-            queryUpdateAccountCredentials.setString(2, account.getSalt());
-            queryUpdateAccountCredentials.setInt(3, account.getIterations());
-            queryUpdateAccountCredentials.setInt(4, account.getAid());
-            if (!(queryUpdateAccountCredentials.executeUpdate() == 0))
-                return true;
-        } catch (SQLException e) {
-        }
-        return false;
-    }
+
 
     public Contact getContact(Account account) throws SQLException {
         querySelectContact.clearParameters();
@@ -334,7 +331,6 @@ public class DatabaseUtilites {
         try {
             try {
                 conn.setAutoCommit(false);
-                account.setAid(accountCounter++);
                 addContact(contact);
                 addAccount(account);
                 addAccountContact(account, contact);

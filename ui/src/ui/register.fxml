@@ -8,17 +8,30 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.layout.HBox?>
+
 <GridPane alignment="CENTER" hgap="10" prefHeight="400.0" prefWidth="600.0" vgap="10" xmlns="http://javafx.com/javafx/8.0.172-ea"
           xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.RegisterController">
 
-            <TextField fx:id="username" GridPane.columnIndex="0" GridPane.rowIndex="0" prefHeight="26.0" prefWidth="212.0" promptText="username"/>
-            <PasswordField fx:id="password" GridPane.columnIndex="0" GridPane.rowIndex="1" promptText="password"/>
-            <PasswordField fx:id="confirmedPass" GridPane.columnIndex="0" GridPane.rowIndex="2" promptText="confirm password"/>
-            <TextField fx:id="alias" GridPane.columnIndex="0" GridPane.rowIndex="3" promptText="alias"/>
-            <TextField fx:id="ipTextField" GridPane.columnIndex="0" GridPane.rowIndex="4" promptText="node ipv4 address"/>
-            <TextField fx:id="portTextField" GridPane.columnIndex="0" GridPane.rowIndex="5" promptText="node port number"/>
-            <TextField fx:id="trustText" editable="false" GridPane.columnIndex="0" GridPane.rowIndex="6" promptText="select truststore"/>
-            <Button fx:id="trustSelector" GridPane.halignment="RIGHT"  text="browse" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
-            <Button fx:id="createAccountBtn" prefHeight="26.0" prefWidth="212.0" text="Confirm" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+
+            <HBox GridPane.columnIndex="0" GridPane.rowIndex="0">
+                <fx:define>
+                    <ToggleGroup  fx:id="requestToggleGroup"/>
+                </fx:define>
+             <RadioButton text ="create" selected="true" toggleGroup="$requestToggleGroup" />
+            <RadioButton text ="add" toggleGroup="$requestToggleGroup"/>
+            </HBox>
+             <TextField fx:id="username" GridPane.columnIndex="0" GridPane.rowIndex="1" prefHeight="26.0" prefWidth="212.0" promptText="username"/>
+            <PasswordField fx:id="password" GridPane.columnIndex="0" GridPane.rowIndex="2" promptText="password"/>
+            <PasswordField fx:id="confirmPass" GridPane.columnIndex="0" GridPane.rowIndex="3" promptText="confirm password"/>
+            <TextField fx:id="alias" GridPane.columnIndex="0" GridPane.rowIndex="4" promptText="alias"/>
+            <TextField fx:id="patronId" GridPane.columnIndex="0" GridPane.rowIndex="5" promptText="patron contact ID"/>
+            <TextField fx:id="ipTextField" GridPane.columnIndex="0" GridPane.rowIndex="6" promptText="node ipv4 address"/>
+            <TextField fx:id="portTextField" GridPane.columnIndex="0" GridPane.rowIndex="7" promptText="node port number"/>
+            <TextField fx:id="trustText" editable="false" GridPane.columnIndex="0" GridPane.rowIndex="8" promptText="select truststore"/>
+            <Button fx:id="trustSelectorBtn" GridPane.halignment="RIGHT"  text="browse" GridPane.columnIndex="0" GridPane.rowIndex="8"/>
+            <Button fx:id="createAccountBtn" prefHeight="26.0" prefWidth="212.0" text="Confirm" GridPane.columnIndex="0" GridPane.rowIndex="9" />
 
 </GridPane>

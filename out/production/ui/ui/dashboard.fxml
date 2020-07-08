@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="1080" prefWidth="1920.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.MessageBoardController">
+<BorderPane prefHeight="1080" prefWidth="1920.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.DashboardController">
 
 <top>
         <MenuBar>
@@ -24,6 +24,19 @@
                     <SeparatorMenuItem />
                 </items>
             </Menu>
+            <Menu text="Edit">
+                <items>
+                    <MenuItem text="Account" />
+                    <SeparatorMenuItem />
+                </items>
+            </Menu>
+            <Menu text="View">
+                <items>
+                    <MenuItem text="Exit" />
+                    <SeparatorMenuItem />
+                </items>
+            </Menu>
+
         </MenuBar>
 </top>
 
@@ -42,7 +55,7 @@
 <right>
     <VBox>
         <padding><Insets bottom="20" left="5" right="15" top="20" /></padding>
-        <Label text="" />
+        <Label text="hello" />
         <Region prefHeight="10" />
         <TextField fx:id="contactSearch" promptText="Search Contacts" />
         <Region prefHeight="10" />

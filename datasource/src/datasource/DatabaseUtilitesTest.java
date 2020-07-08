@@ -1,9 +1,11 @@
 package datasource;
 
 import org.junit.After;
+import org.junit.BeforeClass;
 
 import java.security.SecureRandom;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Base64;
 import java.util.Random;
 
@@ -12,9 +14,17 @@ import static org.junit.Assert.*;
 public class DatabaseUtilitesTest {
 
 
-    private DatabaseUtilites databaseUtilites = DatabaseUtilites.getInstance();
+    private DatabaseUtilites databaseUtilites;
     private Connection conn;
 
+    @BeforeClass
+    public void setup(){
+        try{
+            databaseUtilites = DatabaseUtilites.getInstance();
+        }catch (SQLException e){
+
+        }
+    }
     @After
     public void tearDown(){
 
@@ -24,7 +34,9 @@ public class DatabaseUtilitesTest {
 
     @org.junit.Test
     public void getInstance() {
-        assertEquals(databaseUtilites, DatabaseUtilites.getInstance());
+        try {
+            assertEquals(databaseUtilites, DatabaseUtilites.getInstance());
+        }catch (SQLException e){}
     }
 
 
